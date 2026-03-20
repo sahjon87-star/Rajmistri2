@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Nexus-Serv BD — Provider</title>
+<title>rajmistri BD — worker </title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,800&family=Exo+2:wght@700;800;900&display=swap" rel="stylesheet"/>
 
@@ -30,7 +30,6 @@
   messagingSenderId: "331898998990",
   appId: "1:331898998990:web:79144c83397b99e9dfc09f"
 };
-
   try {
     const app = initializeApp(firebaseConfig);
     window.fbAuth = getAuth(app);
@@ -1320,57 +1319,107 @@ img{display:block;max-width:100%;}
     <span style="flex:1;font-weight:700" data-i18n="verif.title">KYC ভেরিফিকেশন</span>
   </nav>
   <div class="content" style="padding-bottom:20px">
-    <!-- Status banner -->
-    <div style="margin:14px 16px;background:var(--accent-bg);border-radius:var(--r-xl);padding:14px;border:1px solid rgba(249,115,22,.2);display:flex;align-items:center;gap:12px">
+
+    <!-- Status Banner -->
+    <div id="kycStatusBanner" style="margin:14px 16px;background:var(--accent-bg);border-radius:var(--r-xl);padding:14px;border:1px solid rgba(249,115,22,.2);display:flex;align-items:center;gap:12px">
       <div style="font-size:1.8rem">⏳</div>
       <div>
-        <div style="font-weight:700;font-size:.88rem;color:var(--accent)" data-i18n="verif.pending">ভেরিফিকেশন অপেক্ষমাণ</div>
-        <div style="font-size:.75rem;color:var(--text2);margin-top:2px" data-i18n="verif.pendingSub">সম্পূর্ণ ভেরিফিকেশন সম্পন্ন করুন</div>
+        <div style="font-weight:700;font-size:.88rem;color:var(--accent)" id="kycStatusText">ভেরিফিকেশন অপেক্ষমাণ</div>
+        <div style="font-size:.75rem;color:var(--text2);margin-top:2px">সকল ডকুমেন্ট আপলোড করুন</div>
       </div>
     </div>
 
     <div style="padding:0 16px">
-      <div style="padding:14px 0">
-        <div class="verif-step done">
-          <div class="vstep-dot">✓</div>
-          <div class="vstep-body"><h4 data-i18n="verif.mobile">মোবাইল ভেরিফিকেশন</h4><p data-i18n="verif.done">সম্পন্ন</p></div>
-        </div>
-        <div class="verif-step done">
-          <div class="vstep-dot">✓</div>
-          <div class="vstep-body"><h4 data-i18n="verif.email">ইমেইল ভেরিফিকেশন</h4><p data-i18n="verif.done">সম্পন্ন</p></div>
-        </div>
-        <div class="verif-step active">
-          <div class="vstep-dot" style="font-size:.85rem">→</div>
-          <div class="vstep-body">
-            <h4 data-i18n="verif.nid">জাতীয় পরিচয়পত্র (NID)</h4>
-            <p data-i18n="verif.nidSub">NID-এর সামনে ও পিছনের ছবি আপলোড করুন</p>
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <div style="flex:1;height:70px;border:2px dashed var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:.72rem;color:var(--text3)" onclick="showToast(t('toast.uploadOk'),'info')">📷 সামনের দিক</div>
-              <div style="flex:1;height:70px;border:2px dashed var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:.72rem;color:var(--text3)" onclick="showToast(t('toast.uploadOk'),'info')">📷 পিছনের দিক</div>
-            </div>
-            <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="showToast(t('toast.submitted'),'success')" data-i18n="verif.submit">জমা দিন</button>
+
+      <!-- NID Front -->
+      <div class="card" style="margin-bottom:12px;padding:16px">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:4px">📄 NID সামনের দিক</div>
+        <div style="font-size:.75rem;color:var(--text2);margin-bottom:12px">জাতীয় পরিচয়পত্রের সামনের অংশ</div>
+        <div id="nidFrontPreview" style="display:none;margin-bottom:10px">
+          <img id="nidFrontImg" style="width:100%;border-radius:var(--r-md);max-height:160px;object-fit:cover" alt="NID Front"/>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+            <span style="font-size:.75rem;color:var(--green)">✅ আপলোড সম্পন্ন</span>
+            <button class="btn btn-ghost btn-sm" onclick="removeDoc('nidFront')">বাতিল করুন</button>
           </div>
         </div>
-        <div class="verif-step">
-          <div class="vstep-dot" style="font-size:.85rem">4</div>
-          <div class="vstep-body"><h4 data-i18n="verif.selfie">সেলফি ভেরিফিকেশন</h4><p data-i18n="verif.selfieSub">NID ধরে সেলফি তুলুন</p></div>
-        </div>
-        <div class="verif-step">
-          <div class="vstep-dot" style="font-size:.85rem">5</div>
-          <div class="vstep-body"><h4 data-i18n="verif.skill">স্কিল ভেরিফিকেশন</h4><p data-i18n="verif.skillSub">দক্ষতার সার্টিফিকেট / সনদ আপলোড করুন (ঐচ্ছিক)</p></div>
-        </div>
-        <div class="verif-step">
-          <div class="vstep-dot" style="font-size:.85rem">6</div>
-          <div class="vstep-body"><h4 data-i18n="verif.approved">অনুমোদন</h4><p data-i18n="verif.approvedSub">Nexus টিম ২৪-৪৮ ঘণ্টায় যাচাই করবে</p></div>
+        <div id="nidFrontUpload">
+          <input type="file" id="nidFrontFile" accept="image/*" style="display:none" onchange="previewDoc(this,'nidFront')"/>
+          <button class="btn btn-secondary btn-full" onclick="document.getElementById('nidFrontFile').click()">
+            📷 ছবি বেছে নিন
+          </button>
         </div>
       </div>
+
+      <!-- NID Back -->
+      <div class="card" style="margin-bottom:12px;padding:16px">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:4px">📄 NID পিছনের দিক</div>
+        <div style="font-size:.75rem;color:var(--text2);margin-bottom:12px">জাতীয় পরিচয়পত্রের পিছনের অংশ</div>
+        <div id="nidBackPreview" style="display:none;margin-bottom:10px">
+          <img id="nidBackImg" style="width:100%;border-radius:var(--r-md);max-height:160px;object-fit:cover" alt="NID Back"/>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+            <span style="font-size:.75rem;color:var(--green)">✅ আপলোড সম্পন্ন</span>
+            <button class="btn btn-ghost btn-sm" onclick="removeDoc('nidBack')">বাতিল করুন</button>
+          </div>
+        </div>
+        <div id="nidBackUpload">
+          <input type="file" id="nidBackFile" accept="image/*" style="display:none" onchange="previewDoc(this,'nidBack')"/>
+          <button class="btn btn-secondary btn-full" onclick="document.getElementById('nidBackFile').click()">
+            📷 ছবি বেছে নিন
+          </button>
+        </div>
+      </div>
+
+      <!-- Selfie -->
+      <div class="card" style="margin-bottom:12px;padding:16px">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:4px">🤳 সেলফি ভেরিফিকেশন</div>
+        <div style="font-size:.75rem;color:var(--text2);margin-bottom:12px">NID হাতে ধরে সেলফি তুলুন</div>
+        <div id="selfiePreview" style="display:none;margin-bottom:10px">
+          <img id="selfieImg" style="width:100%;border-radius:var(--r-md);max-height:180px;object-fit:cover" alt="Selfie"/>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+            <span style="font-size:.75rem;color:var(--green)">✅ আপলোড সম্পন্ন</span>
+            <button class="btn btn-ghost btn-sm" onclick="removeDoc('selfie')">বাতিল করুন</button>
+          </div>
+        </div>
+        <div id="selfieUpload">
+          <input type="file" id="selfieFile" accept="image/*" capture="user" style="display:none" onchange="previewDoc(this,'selfie')"/>
+          <button class="btn btn-secondary btn-full" onclick="document.getElementById('selfieFile').click()">
+            📷 সেলফি তুলুন
+          </button>
+        </div>
+      </div>
+
+      <!-- Skill Certificate (Optional) -->
+      <div class="card" style="margin-bottom:18px;padding:16px">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:4px">🎓 দক্ষতার সনদ <span style="font-size:.72rem;font-weight:400;color:var(--text3)">(ঐচ্ছিক)</span></div>
+        <div style="font-size:.75rem;color:var(--text2);margin-bottom:12px">কোর্স সার্টিফিকেট বা ট্রেনিং সনদ</div>
+        <div id="skillPreview" style="display:none;margin-bottom:10px">
+          <img id="skillImg" style="width:100%;border-radius:var(--r-md);max-height:160px;object-fit:cover" alt="Skill"/>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+            <span style="font-size:.75rem;color:var(--green)">✅ আপলোড সম্পন্ন</span>
+            <button class="btn btn-ghost btn-sm" onclick="removeDoc('skill')">বাতিল করুন</button>
+          </div>
+        </div>
+        <div id="skillUpload">
+          <input type="file" id="skillFile" accept="image/*,.pdf" style="display:none" onchange="previewDoc(this,'skill')"/>
+          <button class="btn btn-secondary btn-full" onclick="document.getElementById('skillFile').click()">
+            📎 ফাইল বেছে নিন
+          </button>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button class="btn btn-primary btn-full btn-lg" id="btnKycSubmit" onclick="submitKyc()">
+        <span id="kycSubmitTxt">KYC জমা দিন 🚀</span>
+        <svg id="kycSubmitSpin" class="spin" style="display:none;width:17px;height:17px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </button>
+
+      <p style="text-align:center;font-size:.75rem;color:var(--text3);margin-top:12px;line-height:1.6">
+        জমা দেওয়ার পর Nexus টিম ২৪-৪৮ ঘণ্টার মধ্যে যাচাই করবে
+      </p>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════
-     PAGE 15 — CHAT
-══════════════════════════════════════════════════ -->
 <div class="page" id="pg-chat">
   <nav class="top-nav">
     <button class="btn-icon" onclick="goto('pg-active-booking')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
@@ -2293,6 +2342,113 @@ function updateBNavForWorker(){
 }
 
 /* ════ LOGOUT ════ */
+/* ════ KYC DOCUMENT UPLOAD ════ */
+let kycDocs = { nidFront: null, nidBack: null, selfie: null, skill: null };
+
+function previewDoc(input, docType) {
+  if(!input.files || !input.files[0]) return;
+  const file = input.files[0];
+
+  // Validate size (max 5MB)
+  if(file.size > 5 * 1024 * 1024){
+    showToast('ফাইল সাইজ ৫MB-এর কম হতে হবে','error');
+    return;
+  }
+
+  kycDocs[docType] = file;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = document.getElementById(docType + 'Img');
+    const preview = document.getElementById(docType + 'Preview');
+    const upload = document.getElementById(docType + 'Upload');
+    if(img) img.src = e.target.result;
+    if(preview) preview.style.display = 'block';
+    if(upload) upload.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+  showToast('ছবি নির্বাচন করা হয়েছে ✅','success');
+}
+
+function removeDoc(docType) {
+  kycDocs[docType] = null;
+  const preview = document.getElementById(docType + 'Preview');
+  const upload = document.getElementById(docType + 'Upload');
+  const fileInput = document.getElementById(docType + 'File');
+  if(preview) preview.style.display = 'none';
+  if(upload) upload.style.display = 'block';
+  if(fileInput) fileInput.value = '';
+}
+
+async function submitKyc() {
+  // Validate required docs
+  if(!kycDocs.nidFront){ showToast('NID সামনের ছবি দিন','error'); return; }
+  if(!kycDocs.nidBack){  showToast('NID পিছনের ছবি দিন','error'); return; }
+  if(!kycDocs.selfie){   showToast('সেলফি ছবি দিন','error'); return; }
+  if(!currentUser){      showToast('লগইন করুন','error'); return; }
+
+  setLoad('btnKycSubmit','kycSubmitTxt','kycSubmitSpin', true);
+
+  try {
+    // Convert images to base64 for Firestore storage
+    // (Firebase Storage requires separate SDK - using base64 in Firestore as fallback)
+    const toBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const docs = {};
+
+    // Store filenames and metadata (full base64 only if small)
+    docs.nidFrontName = kycDocs.nidFront.name;
+    docs.nidFrontSize = kycDocs.nidFront.size;
+    docs.nidBackName  = kycDocs.nidBack.name;
+    docs.nidBackSize  = kycDocs.nidBack.size;
+    docs.selfieName   = kycDocs.selfie.name;
+    docs.selfieSize   = kycDocs.selfie.size;
+
+    // Store small images as base64 (< 500KB)
+    if(kycDocs.nidFront.size < 500000) docs.nidFrontData = await toBase64(kycDocs.nidFront);
+    if(kycDocs.nidBack.size  < 500000) docs.nidBackData  = await toBase64(kycDocs.nidBack);
+    if(kycDocs.selfie.size   < 500000) docs.selfieData   = await toBase64(kycDocs.selfie);
+    if(kycDocs.skill && kycDocs.skill.size < 500000) {
+      docs.skillName = kycDocs.skill.name;
+      docs.skillData = await toBase64(kycDocs.skill);
+    }
+
+    if(window.fbReady && window.fbDb) {
+      const {doc, updateDoc, serverTimestamp} = window.fbMod;
+      await updateDoc(doc(window.fbDb, 'providers', currentUser.uid), {
+        kycStatus: 'pending',
+        kycDocuments: docs,
+        kycSubmittedAt: serverTimestamp(),
+        nidFrontUploaded: true,
+        nidBackUploaded: true,
+        selfieUploaded: true,
+      });
+      showToast('KYC সফলভাবে জমা হয়েছে! Admin শীঘ্রই যাচাই করবেন 🎉','success');
+
+      // Update banner
+      const banner = document.getElementById('kycStatusText');
+      if(banner) banner.textContent = 'জমা দেওয়া হয়েছে — Admin পর্যালোচনা করছেন';
+
+      // Go back to pending page
+      setTimeout(() => goto('pg-kyc-pending'), 1500);
+    } else {
+      // Demo mode
+      showToast('Demo: KYC জমা হয়েছে (Firebase config দিন real save-এর জন্য)','info');
+      setTimeout(() => goto('pg-kyc-pending'), 1500);
+    }
+  } catch(err) {
+    console.error('KYC submit error:', err);
+    showToast('Error: ' + err.message, 'error');
+  } finally {
+    setLoad('btnKycSubmit','kycSubmitTxt','kycSubmitSpin', false);
+  }
+}
+
 async function doLogout(){
   // Stop real-time listener
   if(kycUnsubscribe){ kycUnsubscribe(); kycUnsubscribe=null; }
