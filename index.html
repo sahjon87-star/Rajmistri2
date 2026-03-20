@@ -1,0 +1,2579 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Nexus-Serv BD — Provider</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,800&family=Exo+2:wght@700;800;900&display=swap" rel="stylesheet"/>
+
+<!-- ════ FIREBASE SDK ════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword,
+    createUserWithEmailAndPassword, signInWithPhoneNumber, RecaptchaVerifier,
+    sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, query, where,
+    getDocs, addDoc, onSnapshot, orderBy, serverTimestamp, updateDoc, increment }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // ══════════════════════════════════════════════════════
+  // FIREBASE CONFIG — Apna actual config yahan daalen
+  // ══════════════════════════════════════════════════════
+  const firebaseConfig = {
+  apiKey: "AIzaSyBMcpr3SmsHgh6rYFlHoKHsK4JkIDJNiBY",
+  authDomain: "rajmistri-1.firebaseapp.com",
+  databaseURL: "https://rajmistri-1-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rajmistri-1",
+  storageBucket: "rajmistri-1.firebasestorage.app",
+  messagingSenderId: "331898998990",
+  appId: "1:331898998990:web:79144c83397b99e9dfc09f"
+};
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    window.fbAuth = getAuth(app);
+    window.fbDb   = getFirestore(app);
+    window.fbGoogle = new GoogleAuthProvider();
+    window.fbGoogle.setCustomParameters({prompt:'select_account'});
+    window.fbMod = { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+      signInWithPhoneNumber, RecaptchaVerifier, sendPasswordResetEmail, signOut,
+      onAuthStateChanged, updateProfile, doc, setDoc, getDoc, collection, query, where,
+      getDocs, addDoc, onSnapshot, orderBy, serverTimestamp, updateDoc, increment };
+    window.fbReady = true;
+    document.dispatchEvent(new Event('fb-ready'));
+  } catch(e) {
+    console.warn('Firebase init failed:', e.message);
+    window.fbReady = false;
+    document.dispatchEvent(new Event('fb-ready'));
+  }
+</script>
+
+<style>
+/* ══════════════════════════════════════════════
+   DESIGN TOKENS — Provider uses deeper teal+indigo
+══════════════════════════════════════════════ */
+:root {
+  --brand:      #0EA5A0;
+  --brand-d:    #0C8A86;
+  --brand-dd:   #096B68;
+  --brand-bg:   #E6F7F7;
+  --accent:     #F97316;
+  --accent-bg:  #FFF3E8;
+  --indigo:     #4F46E5;
+  --indigo-bg:  #EEF2FF;
+  --navy:       #0D1B2A;
+  --navy2:      #12232E;
+  --bg:         #EFF4F4;
+  --surface:    #FFFFFF;
+  --surface2:   #F5F9F9;
+  --surface3:   #EBF3F3;
+  --text:       #0F1E1E;
+  --text2:      #3C5A5A;
+  --text3:      #7A9E9E;
+  --border:     #D8EDED;
+  --green:      #22C55E;
+  --yellow:     #F59E0B;
+  --red:        #EF4444;
+  --r-sm: 8px; --r-md:12px; --r-lg:16px; --r-xl:20px; --r-2xl:26px; --r-pill:50px;
+  --sh-sm: 0 1px 6px rgba(0,0,0,.05);
+  --sh-md: 0 4px 20px rgba(0,0,0,.08);
+  --sh-lg: 0 8px 40px rgba(0,0,0,.12);
+  --sh-brand: 0 6px 24px rgba(14,165,160,.28);
+  --fn-bn: 'Hind Siliguri', sans-serif;
+  --fn-en: 'DM Sans', sans-serif;
+  --fn-hd: 'Exo 2', sans-serif;
+  --nav-h:60px; --bot-h:68px; --t:150ms;
+}
+[data-theme="dark"] {
+  --bg:#080E0E; --surface:#0F1717; --surface2:#152020; --surface3:#1C2B2B;
+  --text:#E2EEEE; --text2:#7A9E9E; --text3:#3C5A5A; --border:#1E3030;
+  --brand-bg:#061818; --accent-bg:#1A0A00; --indigo-bg:#0E0C2A;
+  --navy:#040A0A; --navy2:#060F0F;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{font-family:var(--fn-bn);background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;max-width:430px;margin:0 auto;}
+a{text-decoration:none;color:inherit;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;outline:none;}
+input,textarea,select{font-family:inherit;outline:none;border:none;}
+img{display:block;max-width:100%;}
+[data-lang="en"] body{font-family:var(--fn-en);}
+::-webkit-scrollbar{width:0;height:0;}
+
+/* ══ PAGE SYSTEM ══ */
+.page{display:none;flex-direction:column;min-height:100dvh;background:var(--bg);}
+.page.active{display:flex;animation:pgIn .22s ease;}
+@keyframes pgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 20px;border-radius:var(--r-lg);font-weight:700;font-size:.88rem;transition:all var(--t);white-space:nowrap;cursor:pointer;}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:var(--sh-brand);}
+.btn-primary:hover{background:var(--brand-d);}
+.btn-secondary{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
+.btn-secondary:hover{border-color:var(--brand);color:var(--brand);}
+.btn-ghost{background:var(--brand-bg);color:var(--brand-d);border:none;}
+.btn-ghost:hover{background:var(--brand);color:#fff;}
+.btn-accent{background:var(--accent);color:#fff;box-shadow:0 6px 20px rgba(249,115,22,.28);}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--red);border:none;}
+.btn-indigo{background:var(--indigo);color:#fff;box-shadow:0 6px 20px rgba(79,70,229,.25);}
+.btn-full{width:100%;}
+.btn-lg{padding:13px 26px;font-size:.93rem;border-radius:var(--r-xl);}
+.btn-sm{padding:6px 13px;font-size:.76rem;border-radius:var(--r-md);}
+.btn-icon{width:40px;height:40px;padding:0;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);}
+.btn[disabled]{opacity:.5;pointer-events:none;}
+.btn-google{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
+
+/* ══ INPUTS ══ */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+.field-label{font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+.input{width:100%;padding:11px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-md);color:var(--text);font-size:.9rem;transition:border-color var(--t),box-shadow var(--t);}
+.input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(14,165,160,.12);background:var(--surface);}
+.input.err{border-color:var(--red);}
+.input-wrap{position:relative;}
+.input-wrap .input{padding-left:42px;}
+.input-wrap .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);width:17px;height:17px;}
+.select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A9E9E' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;}
+.phone-row{display:flex;border:1.5px solid var(--border);border-radius:var(--r-md);overflow:hidden;background:var(--surface2);transition:border-color var(--t),box-shadow var(--t);}
+.phone-row:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px rgba(14,165,160,.12);}
+.phone-pre{padding:11px 11px;font-size:.86rem;font-weight:700;color:var(--text3);border-right:1.5px solid var(--border);white-space:nowrap;}
+.phone-row .input{border:none;background:transparent;flex:1;box-shadow:none!important;}
+.field-err{font-size:.72rem;color:var(--red);margin-top:2px;}
+
+/* ══ CARDS ══ */
+.card{background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--border);box-shadow:var(--sh-sm);overflow:hidden;}
+.card-flat{background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--border);overflow:hidden;}
+.card:hover{box-shadow:var(--sh-md);}
+
+/* ══ BADGES ══ */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--r-pill);font-size:.69rem;font-weight:700;}
+.badge-success{background:rgba(34,197,94,.12);color:#16A34A;}
+.badge-warn{background:rgba(245,158,11,.12);color:#B45309;}
+.badge-danger{background:rgba(239,68,68,.12);color:#DC2626;}
+.badge-brand{background:var(--brand-bg);color:var(--brand-d);}
+.badge-indigo{background:var(--indigo-bg);color:var(--indigo);}
+.badge-accent{background:var(--accent-bg);color:var(--accent);}
+
+/* ══ DIVIDER ══ */
+.or{display:flex;align-items:center;gap:10px;color:var(--text3);font-size:.77rem;margin:10px 0;}
+.or::before,.or::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ══ SKELETON ══ */
+@keyframes sk{from{background-position:200% 0}to{background-position:-200% 0}}
+.sk{border-radius:var(--r-md);background:linear-gradient(90deg,var(--border) 25%,var(--surface2) 50%,var(--border) 75%);background-size:200% 100%;animation:sk 1.4s infinite;}
+
+/* ══ AVATAR ══ */
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden;flex-shrink:0;background:var(--brand-bg);color:var(--brand-d);}
+.av img{width:100%;height:100%;object-fit:cover;}
+
+/* ══ STARS ══ */
+.stars span{color:#F59E0B;font-size:.8rem;}
+.stars span.e{color:var(--border);}
+
+/* ══ TOAST ══ */
+#tc{position:fixed;top:70px;right:12px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:290px;}
+.toast{display:flex;align-items:center;gap:9px;padding:10px 14px;border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--sh-lg);border:1px solid var(--border);font-size:.82rem;font-weight:500;animation:toIn .3s ease;}
+@keyframes toIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toOut{from{transform:translateX(0);opacity:1}to{transform:translateX(110%);opacity:0}}
+
+/* ══ MODAL ══ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.overlay.open{display:flex;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.sheet{width:100%;max-width:430px;background:var(--surface);border-radius:26px 26px 0 0;padding:20px 20px 34px;max-height:90dvh;overflow-y:auto;animation:shUp .3s ease;}
+@keyframes shUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sh-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.sh-title{font-size:1.05rem;font-weight:700;margin-bottom:14px;}
+
+/* ══ TABS ══ */
+.tabs{display:flex;background:var(--surface2);border-radius:var(--r-md);padding:3px;gap:3px;}
+.tab-btn{flex:1;padding:8px;border-radius:var(--r-sm);font-size:.8rem;font-weight:600;color:var(--text3);transition:all var(--t);}
+.tab-btn.on{background:var(--surface);color:var(--brand);box-shadow:var(--sh-sm);}
+
+/* ══ TOP NAV ══ */
+.top-nav{position:sticky;top:0;z-index:80;background:var(--surface);border-bottom:1px solid var(--border);height:var(--nav-h);display:flex;align-items:center;padding:0 16px;gap:10px;box-shadow:var(--sh-sm);}
+.nav-brand{display:flex;align-items:center;gap:8px;flex:1;}
+.nav-logo-box{width:34px;height:34px;border-radius:10px;background:var(--brand);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(14,165,160,.3);}
+.nav-logo-box svg{width:18px;height:18px;fill:#fff;}
+.nav-title{font-family:var(--fn-hd);font-size:1rem;font-weight:800;letter-spacing:-.02em;}
+.nav-title em{color:var(--brand);font-style:normal;}
+.nav-actions{display:flex;align-items:center;gap:6px;}
+.nav-btn{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text2);cursor:pointer;transition:background var(--t);position:relative;}
+.nav-btn:hover{background:var(--surface2);}
+.nav-btn svg{width:20px;height:20px;}
+.ndot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--accent);border:2px solid var(--surface);}
+
+/* ══ BOTTOM NAV ══ */
+.bot-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);height:var(--bot-h);display:flex;align-items:center;padding:0 6px 6px;z-index:80;box-shadow:0 -4px 20px rgba(0,0,0,.06);}
+.bnav{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--text3);cursor:pointer;transition:color var(--t);}
+.bnav svg{width:22px;height:22px;}
+.bnav span{font-size:.59rem;font-weight:700;letter-spacing:.02em;}
+.bnav.on{color:var(--brand);}
+.bnav-fab-wrap{flex:1;display:flex;justify-content:center;}
+.bnav-fab{width:50px;height:50px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;margin-top:-16px;box-shadow:var(--sh-brand);transition:all var(--t);border:3px solid var(--bg);}
+.bnav-fab:hover{background:var(--brand-d);transform:scale(1.06);}
+.bnav-fab svg{width:22px;height:22px;}
+
+/* ══ CONTENT ══ */
+.content{flex:1;padding-bottom:calc(var(--bot-h) + 8px);overflow-y:auto;}
+.sec-head{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px;}
+.sec-head h3{font-size:.93rem;font-weight:700;}
+.sec-head a,.sec-head button{font-size:.77rem;font-weight:700;color:var(--brand);background:none;border:none;cursor:pointer;}
+.px{padding-left:16px;padding-right:16px;}
+
+/* ══ AUTH ══ */
+.auth-bg{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--bg);position:relative;overflow:hidden;}
+.auth-bg::before{content:'';position:absolute;top:-80px;right:-60px;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,160,.14),transparent 70%);pointer-events:none;}
+.auth-bg::after{content:'';position:absolute;bottom:-80px;left:-50px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,.08),transparent 70%);pointer-events:none;}
+.auth-box{width:100%;max-width:400px;background:var(--surface);border-radius:26px;border:1px solid var(--border);box-shadow:var(--sh-lg);padding:26px 22px;position:relative;z-index:1;}
+.auth-logo{text-align:center;margin-bottom:20px;}
+.auth-ring{width:58px;height:58px;border-radius:16px;background:var(--brand);display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:var(--sh-brand);}
+.auth-ring svg{width:28px;height:28px;fill:#fff;}
+.auth-logo h1{font-family:var(--fn-hd);font-size:1.4rem;color:var(--brand);letter-spacing:-.03em;}
+.auth-logo p{font-size:.77rem;color:var(--text3);margin-top:2px;}
+.auth-h{font-size:1.05rem;font-weight:700;margin-bottom:3px;}
+.auth-sub{font-size:.79rem;color:var(--text2);margin-bottom:16px;}
+
+/* ══ PASSWORD STRENGTH ══ */
+.pwd-track{height:3px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden;}
+.pwd-fill{height:100%;width:0;border-radius:2px;transition:width .3s,background .3s;}
+.pwd-fill.s1{background:var(--red);}
+.pwd-fill.s2{background:var(--yellow);}
+.pwd-fill.s3{background:var(--brand);}
+.pwd-fill.s4{background:var(--green);}
+
+/* ══ OTP ══ */
+.otp-row{display:flex;gap:8px;justify-content:center;margin:16px 0;}
+.otp-box{width:46px;height:52px;text-align:center;font-size:1.4rem;font-weight:800;border:2px solid var(--border);border-radius:var(--r-md);background:var(--surface2);color:var(--text);transition:border-color var(--t),box-shadow var(--t);}
+.otp-box:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(14,165,160,.12);outline:none;background:var(--surface);}
+
+/* ══ ROLE CARDS ══ */
+.role-grid{display:flex;gap:10px;margin-bottom:14px;}
+.role-card{flex:1;border:2px solid var(--border);border-radius:var(--r-lg);padding:14px 10px;text-align:center;cursor:pointer;transition:all var(--t);}
+.role-card.on{border-color:var(--brand);background:var(--brand-bg);}
+.role-card .ri{font-size:1.5rem;margin-bottom:5px;}
+.role-card span{font-size:.77rem;font-weight:700;color:var(--text3);display:block;}
+.role-card.on span{color:var(--brand-d);}
+
+/* ══ LANG + THEME FLOATS ══ */
+.lang-float{position:fixed;top:14px;right:14px;z-index:200;display:flex;background:var(--surface);border-radius:var(--r-pill);padding:3px;box-shadow:var(--sh-md);border:1px solid var(--border);}
+.lang-btn{padding:4px 11px;border-radius:var(--r-pill);font-size:.72rem;font-weight:700;color:var(--text3);transition:all var(--t);cursor:pointer;}
+.lang-btn.on{background:var(--brand);color:#fff;}
+.theme-float{position:fixed;top:14px;left:14px;z-index:200;width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);box-shadow:var(--sh-md);display:flex;align-items:center;justify-content:center;font-size:.95rem;cursor:pointer;}
+
+/* ══ TOGGLE ══ */
+.toggle{width:42px;height:23px;border-radius:12px;background:var(--border);position:relative;cursor:pointer;transition:background var(--t);flex-shrink:0;}
+.toggle.on{background:var(--brand);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform var(--t);box-shadow:var(--sh-sm);}
+.toggle.on::after{transform:translateX(19px);}
+
+/* ══ DASHBOARD HERO ══ */
+.dash-hero{background:linear-gradient(145deg,var(--navy) 0%,var(--navy2) 60%,#0A2222 100%);padding:20px 16px 28px;position:relative;overflow:hidden;}
+.dash-hero::before{content:'';position:absolute;top:-50px;right:-30px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,160,.18),transparent 70%);pointer-events:none;}
+.dash-hero::after{content:'';position:absolute;bottom:-60px;left:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,.1),transparent 70%);pointer-events:none;}
+.dash-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;position:relative;z-index:1;}
+.dash-greeting{color:rgba(255,255,255,.7);font-size:.8rem;}
+.dash-name{color:#fff;font-size:1.1rem;font-weight:800;font-family:var(--fn-hd);letter-spacing:-.02em;margin-top:2px;}
+.dash-av{width:44px;height:44px;font-size:.95rem;border:2px solid var(--brand);}
+.dash-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1;}
+.dash-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-lg);padding:14px;}
+.dash-stat .v{font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-.02em;}
+.dash-stat .l{font-size:.72rem;color:rgba(255,255,255,.55);margin-top:2px;}
+.dash-stat .delta{font-size:.7rem;margin-top:4px;font-weight:600;}
+.dash-stat .delta.up{color:#4ADE80;}
+.dash-stat .delta.dn{color:#F87171;}
+
+/* ══ STATUS INDICATOR ══ */
+.status-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);}
+.online-pill{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:var(--r-pill);font-size:.8rem;font-weight:700;cursor:pointer;transition:all var(--t);}
+.online-pill.on{background:rgba(34,197,94,.12);color:#16A34A;}
+.online-pill.off{background:rgba(239,68,68,.1);color:var(--red);}
+.online-pill .dot{width:8px;height:8px;border-radius:50%;}
+.online-pill.on .dot{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.5);}
+.online-pill.off .dot{background:var(--red);}
+
+/* ══ JOB CARD ══ */
+.job-card{background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--border);padding:16px;margin:0 16px 10px;cursor:pointer;transition:all var(--t);box-shadow:var(--sh-sm);}
+.job-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);border-color:var(--brand);}
+.job-card-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.job-info{flex:1;}
+.job-info h3{font-size:.9rem;font-weight:700;margin-bottom:2px;}
+.job-info p{font-size:.77rem;color:var(--text2);}
+.job-card-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.job-card-meta span{display:flex;align-items:center;gap:4px;font-size:.75rem;color:var(--text3);}
+.job-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);}
+.job-price{font-size:1rem;font-weight:800;color:var(--brand);}
+
+/* ══ EARNINGS CHART BARS ══ */
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:80px;padding:0 2px;}
+.chart-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;background:var(--brand-bg);transition:height .6s ease,background .3s;}
+.chart-bar.active{background:var(--brand);}
+.chart-label{font-size:.65rem;color:var(--text3);font-weight:600;}
+
+/* ══ VERIFICATION STEPS ══ */
+.verif-step{display:flex;gap:14px;position:relative;padding-bottom:16px;}
+.verif-step:not(:last-child)::after{content:'';position:absolute;left:17px;top:36px;bottom:0;width:2px;background:var(--border);}
+.verif-step.done:not(:last-child)::after{background:var(--brand);}
+.vstep-dot{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;transition:all var(--t);}
+.verif-step.done .vstep-dot{background:var(--brand);border-color:var(--brand);color:#fff;}
+.verif-step.active .vstep-dot{border-color:var(--brand);color:var(--brand);background:var(--brand-bg);}
+.vstep-body{padding:4px 0 0;}
+.vstep-body h4{font-size:.88rem;font-weight:700;}
+.vstep-body p{font-size:.77rem;color:var(--text3);margin-top:2px;}
+
+/* ══ SHOP PRODUCT CARD ══ */
+.product-card{background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;transition:all var(--t);}
+.product-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);}
+.product-img{height:100px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:2rem;}
+.product-info{padding:10px;}
+.product-info h4{font-size:.83rem;font-weight:700;margin-bottom:3px;}
+.product-info .price{font-size:.93rem;font-weight:800;color:var(--brand);}
+.product-info .stock{font-size:.7rem;color:var(--text3);margin-top:2px;}
+
+/* ══ MENU ITEM ══ */
+.menu-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--t);}
+.menu-item:hover{background:var(--surface2);}
+.menu-item:last-child{border-bottom:none;}
+.menu-icon{width:36px;height:36px;border-radius:var(--r-md);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.menu-label{flex:1;font-size:.87rem;font-weight:600;}
+.menu-sub{font-size:.73rem;color:var(--text3);margin-top:1px;}
+.menu-arr{color:var(--text3);font-size:1.1rem;}
+
+/* ══ PROFILE HERO ══ */
+.profile-hero{background:linear-gradient(145deg,var(--navy),var(--navy2));padding:28px 20px 56px;text-align:center;position:relative;}
+.profile-av{width:80px;height:80px;font-size:1.8rem;border:3px solid var(--brand);margin:0 auto 10px;}
+.profile-name{font-size:1.2rem;font-weight:800;color:#fff;font-family:var(--fn-hd);}
+.profile-role{font-size:.78rem;color:rgba(255,255,255,.55);margin-top:3px;}
+.profile-stats{display:flex;background:var(--surface);border-radius:var(--r-xl);margin:0 16px;margin-top:-28px;box-shadow:var(--sh-md);position:relative;z-index:2;overflow:hidden;}
+.profile-stat{flex:1;padding:14px;text-align:center;border-right:1px solid var(--border);}
+.profile-stat:last-child{border-right:none;}
+.profile-stat .v{font-size:1.15rem;font-weight:800;color:var(--brand);}
+.profile-stat .l{font-size:.67rem;color:var(--text3);margin-top:2px;}
+
+/* ══ REVIEW ITEM ══ */
+.review-item{padding:13px 16px;border-bottom:1px solid var(--border);}
+.review-item:last-child{border-bottom:none;}
+.review-top{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.review-text{font-size:.82rem;color:var(--text2);line-height:1.65;}
+
+/* ══ ACTIVE BOOKING TRACKER ══ */
+.active-job-card{background:var(--surface);border-radius:var(--r-xl);margin:0 16px 10px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--sh-sm);}
+.ajc-header{background:linear-gradient(135deg,var(--brand),var(--brand-d));padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.ajc-body{padding:14px 16px;}
+.ajc-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.ajc-row:last-child{margin-bottom:0;}
+.ajc-label{font-size:.78rem;color:var(--text3);}
+.ajc-val{font-size:.85rem;font-weight:700;}
+
+/* ══ EMPTY STATE ══ */
+.empty{text-align:center;padding:48px 24px;}
+.empty .icon{font-size:3rem;margin-bottom:12px;}
+.empty h3{font-size:.93rem;font-weight:700;margin-bottom:6px;}
+.empty p{font-size:.8rem;color:var(--text2);line-height:1.65;}
+
+/* ══ SETTING ROW ══ */
+.setting-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;}
+.setting-info{flex:1;}
+.setting-info h4{font-size:.86rem;font-weight:600;}
+.setting-info p{font-size:.73rem;color:var(--text3);margin-top:2px;}
+
+/* ══ SPINNER ══ */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .7s linear infinite;}
+
+/* ══ DARK OVERRIDES ══ */
+[data-theme="dark"] .dash-hero{background:linear-gradient(145deg,#040A0A,#060F0F,#081515);}
+[data-theme="dark"] .profile-hero{background:linear-gradient(145deg,#040A0A,#060F0F);}
+[data-theme="dark"] .btn-google{background:var(--surface2);}
+[data-theme="dark"] .otp-box{background:var(--surface2);}
+[data-theme="dark"] .ajc-header{background:linear-gradient(135deg,var(--brand-d),var(--brand-dd));}
+
+@media(min-width:430px){
+  body{box-shadow:0 0 40px rgba(0,0,0,.12);}
+  #tc{right:calc(50% - 215px + 12px);}
+}
+</style>
+</head>
+<body>
+
+<!-- ════ FLOAT CONTROLS ════ -->
+<div class="lang-float" id="langFloat">
+  <button class="lang-btn on" data-lang="bn">বাং</button>
+  <button class="lang-btn" data-lang="en">EN</button>
+</div>
+<button class="theme-float" id="themeBtn">🌙</button>
+<div id="tc"></div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 1 — LOGIN
+══════════════════════════════════════════════════ -->
+<div class="page active" id="pg-login">
+  <div class="auth-bg">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-ring">
+          <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <h1 class="t-brand">Nexus-Serv BD</h1>
+        <p data-i18n="login.sub.provider">প্রোভাইডার পোর্টাল — সেবা দিন, আয় করুন</p>
+      </div>
+
+      <h2 class="auth-h" data-i18n="login.heading">লগইন করুন</h2>
+      <p class="auth-sub" data-i18n="login.sub">আপনার প্রোভাইডার অ্যাকাউন্টে প্রবেশ করুন</p>
+
+      <div class="tabs" style="margin-bottom:16px">
+        <button class="tab-btn on" id="tabEmail" onclick="switchTab('email')" data-i18n="tab.email">ইমেইল</button>
+        <button class="tab-btn" id="tabPhone" onclick="switchTab('phone')" data-i18n="tab.phone">মোবাইল OTP</button>
+      </div>
+
+      <div id="pnlEmail">
+        <div class="field">
+          <label class="field-label" data-i18n="field.email">ইমেইল</label>
+          <div class="input-wrap">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <input type="email" class="input" id="lEmail" placeholder="example@email.com" autocomplete="email"/>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.password">পাসওয়ার্ড</label>
+          <div class="input-wrap">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="16" r="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" class="input" id="lPwd" placeholder="••••••••" autocomplete="current-password"/>
+          </div>
+        </div>
+        <div style="text-align:right;margin:-6px 0 12px">
+          <a onclick="goto('pg-forgot')" style="font-size:.78rem;color:var(--brand);font-weight:700;cursor:pointer" data-i18n="login.forgot">পাসওয়ার্ড ভুলে গেছেন?</a>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" id="btnELogin" onclick="doEmailLogin()">
+          <span id="eltxt" data-i18n="login.btn">লগইন করুন</span>
+          <svg id="elspin" class="spin" style="display:none;width:17px;height:17px" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </button>
+      </div>
+
+      <div id="pnlPhone" style="display:none">
+        <div class="field">
+          <label class="field-label" data-i18n="field.phone">মোবাইল নম্বর</label>
+          <div class="phone-row">
+            <span class="phone-pre">🇧🇩 +880</span>
+            <input type="tel" class="input" id="lPhone" placeholder="01XXXXXXXXX" maxlength="11"/>
+          </div>
+        </div>
+        <div id="rc-login"></div>
+        <button class="btn btn-primary btn-full btn-lg" id="btnPLogin" onclick="doPhoneLogin()">
+          <span id="pltxt" data-i18n="otp.send">OTP পাঠান</span>
+          <svg id="plspin" class="spin" style="display:none;width:17px;height:17px" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </button>
+      </div>
+
+      <div class="or"><span data-i18n="or">অথবা</span></div>
+      <button class="btn btn-google btn-full" onclick="doGoogleLogin()" style="margin-bottom:14px">
+        <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.1 29.3 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.5 7.1 29 5 24 5 13 5 4 14 4 25s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 19 13 24 13c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.5 7.1 29 5 24 5 16.3 5 9.7 9 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5 0 9.5-1.9 12.9-5l-6-5.1C29.2 36.5 26.7 37.5 24 37.5 18.7 37.5 14.3 34 12.7 29.2l-6.6 5C9.5 40.6 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.3 4-4.3 5.2l6 5.1c-.4.4 6.4-4.7 6.4-13.2 0-1.3-.1-2.6-.4-3.9z"/></svg>
+        <span data-i18n="google.btn">Google দিয়ে লগইন</span>
+      </button>
+
+      <p style="text-align:center;font-size:.8rem;color:var(--text2)">
+        <span data-i18n="login.noAcc">অ্যাকাউন্ট নেই?</span>
+        <a onclick="goto('pg-signup')" style="color:var(--brand);font-weight:700;cursor:pointer;margin-left:4px" data-i18n="login.register">নিবন্ধন করুন</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 2 — SIGNUP
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-signup">
+  <div class="auth-bg">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-ring"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+        <h1 class="t-brand">Provider Portal</h1>
+      </div>
+
+      <h2 class="auth-h" data-i18n="signup.heading">প্রোভাইডার হিসেবে নিবন্ধন</h2>
+      <p class="auth-sub" data-i18n="signup.sub">আপনার দক্ষতা শেয়ার করুন, আয় করুন</p>
+
+      <div class="field">
+        <label class="field-label" data-i18n="field.name">পূর্ণ নাম</label>
+        <input type="text" class="input" id="sName" autocomplete="name" placeholder="আপনার নাম"/>
+        <span class="field-err" id="nameErr"></span>
+      </div>
+      <div class="field">
+        <label class="field-label" data-i18n="field.email">ইমেইল</label>
+        <input type="email" class="input" id="sEmail" autocomplete="email" placeholder="example@email.com"/>
+        <span class="field-err" id="emailErr"></span>
+      </div>
+      <div class="field">
+        <label class="field-label" data-i18n="field.phone">মোবাইল</label>
+        <div class="phone-row">
+          <span class="phone-pre">🇧🇩 +880</span>
+          <input type="tel" class="input" id="sPhone" placeholder="01XXXXXXXXX" maxlength="11"/>
+        </div>
+      </div>
+      <!-- Provider Type -->
+      <div class="field">
+        <label class="field-label">প্রোভাইডার ধরন</label>
+        <div class="role-grid" id="provTypeGrid">
+          <div class="role-card on" id="ptWorker" onclick="selectProvType('worker')">
+            <div class="ri">🔧</div><span>Worker<br><small style="font-weight:400;color:var(--text3)">সেবা দিন</small></span>
+          </div>
+          <div class="role-card" id="ptShop" onclick="selectProvType('shop_owner')">
+            <div class="ri">🏪</div><span>Shop Owner<br><small style="font-weight:400;color:var(--text3)">পণ্য বিক্রি</small></span>
+          </div>
+        </div>
+      </div>
+      <!-- Worker skill (shown for worker) -->
+      <div class="field" id="skillField">
+        <label class="field-label" data-i18n="field.skill">প্রধান দক্ষতা / পেশা</label>
+        <select class="input select" id="sSkill">
+          <option value="" data-i18n="signup.selectSkill">পেশা বেছে নিন</option>
+          <option value="electrician">ইলেকট্রিশিয়ান</option>
+          <option value="plumber">প্লাম্বার</option>
+          <option value="ac">এসি মেকানিক</option>
+          <option value="painter">পেইন্টার</option>
+          <option value="cleaner">ক্লিনার</option>
+          <option value="carpenter">কার্পেন্টার</option>
+          <option value="welder">ওয়েল্ডার</option>
+          <option value="other">অন্যান্য</option>
+        </select>
+      </div>
+      <!-- Shop name (shown for shop_owner) -->
+      <div class="field" id="shopField" style="display:none">
+        <label class="field-label">দোকানের নাম</label>
+        <input type="text" class="input" id="sShopName" placeholder="আপনার দোকানের নাম"/>
+      </div>
+      <div class="field">
+        <label class="field-label" data-i18n="field.password">পাসওয়ার্ড</label>
+        <input type="password" class="input" id="sPwd" placeholder="কমপক্ষে ৬ অক্ষর" oninput="pwdStr(this.value)"/>
+        <div class="pwd-track"><div class="pwd-fill" id="pwdFill"></div></div>
+      </div>
+      <div class="field">
+        <label class="field-label" data-i18n="field.confirmPwd">পাসওয়ার্ড নিশ্চিত</label>
+        <input type="password" class="input" id="sCnf" placeholder="••••••••"/>
+        <span class="field-err" id="cnfErr"></span>
+      </div>
+      <label style="display:flex;align-items:flex-start;gap:9px;margin-bottom:14px;font-size:.8rem;color:var(--text2);cursor:pointer">
+        <input type="checkbox" id="agreeChk" style="margin-top:2px;accent-color:var(--brand);width:15px;height:15px"/>
+        <span data-i18n="signup.agree">আমি Nexus-Serv BD-এর শর্তাবলী ও গোপনীয়তা নীতিতে সম্মত</span>
+      </label>
+
+      <button class="btn btn-primary btn-full btn-lg" id="btnSignup" onclick="doSignup()">
+        <span id="sutxt" data-i18n="signup.btn">অ্যাকাউন্ট তৈরি করুন</span>
+        <svg id="suspin" class="spin" style="display:none;width:17px;height:17px" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </button>
+      <div class="or"><span data-i18n="or">অথবা</span></div>
+      <button class="btn btn-google btn-full" onclick="doGoogleLogin()">
+        <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.1 29.3 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.5 7.1 29 5 24 5 13 5 4 14 4 25s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 19 13 24 13c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.5 7.1 29 5 24 5 16.3 5 9.7 9 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5 0 9.5-1.9 12.9-5l-6-5.1C29.2 36.5 26.7 37.5 24 37.5 18.7 37.5 14.3 34 12.7 29.2l-6.6 5C9.5 40.6 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.3 4-4.3 5.2l6 5.1c-.4.4 6.4-4.7 6.4-13.2 0-1.3-.1-2.6-.4-3.9z"/></svg>
+        <span data-i18n="google.btn">Google দিয়ে সাইন আপ</span>
+      </button>
+      <p style="text-align:center;margin-top:14px;font-size:.8rem;color:var(--text2)">
+        <span data-i18n="signup.hasAcc">ইতিমধ্যে অ্যাকাউন্ট আছে?</span>
+        <a onclick="goto('pg-login')" style="color:var(--brand);font-weight:700;cursor:pointer;margin-left:4px" data-i18n="login.btn">লগইন করুন</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 3 — OTP VERIFY
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-otp">
+  <div class="auth-bg">
+    <div class="auth-box">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:2.8rem;margin-bottom:8px">📱</div>
+        <h2 class="auth-h" data-i18n="otp.heading">OTP কোড দিন</h2>
+        <p class="auth-sub" id="otpSub" data-i18n="otp.sub">আপনার নম্বরে ৬-সংখ্যার কোড পাঠানো হয়েছে</p>
+      </div>
+      <div class="otp-row" id="otpInputs">
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric"/>
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" id="btnOtp" onclick="verifyOTP()" disabled>
+        <span id="otptxt" data-i18n="otp.verify">যাচাই করুন</span>
+        <svg id="otpspin" class="spin" style="display:none;width:17px;height:17px" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </button>
+      <div style="text-align:center;margin-top:14px;font-size:.8rem;color:var(--text2)">
+        <span data-i18n="otp.resendIn">পুনরায় পাঠান</span>
+        <span id="otpTimer" style="font-weight:700;color:var(--brand);margin-left:4px">00:30</span>
+        <button id="resendBtn" onclick="resendOTP()" style="display:none;color:var(--brand);font-weight:700;cursor:pointer;margin-left:4px" data-i18n="otp.resend">পুনরায় পাঠান</button>
+      </div>
+      <div style="text-align:center;margin-top:12px">
+        <a onclick="goto('pg-login')" style="font-size:.77rem;color:var(--text3);cursor:pointer" data-i18n="common.back">← ফিরে যান</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 4 — FORGOT PASSWORD
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-forgot">
+  <div class="auth-bg">
+    <div class="auth-box">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:2.8rem;margin-bottom:8px">🔑</div>
+        <h2 class="auth-h" data-i18n="forgot.heading">পাসওয়ার্ড রিসেট</h2>
+        <p class="auth-sub" data-i18n="forgot.sub">ইমেইলে রিসেট লিংক পাঠানো হবে</p>
+      </div>
+      <div id="forgotForm">
+        <div class="field">
+          <label class="field-label" data-i18n="field.email">ইমেইল</label>
+          <input type="email" class="input" id="fEmail" placeholder="example@email.com"/>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" id="btnForgot" onclick="doForgot()">
+          <span id="ftxt" data-i18n="forgot.btn">রিসেট লিংক পাঠান</span>
+          <svg id="fspin" class="spin" style="display:none;width:17px;height:17px" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </button>
+      </div>
+      <div id="forgotOK" style="display:none;text-align:center">
+        <div style="font-size:2.8rem;margin-bottom:10px">✅</div>
+        <p style="font-size:.87rem;color:var(--text2);margin-bottom:16px" data-i18n="forgot.success">ইমেইল পাঠানো হয়েছে! ইনবক্স চেক করুন।</p>
+        <button class="btn btn-primary btn-full" onclick="goto('pg-login')" data-i18n="forgot.back">লগইনে ফিরুন</button>
+      </div>
+      <div style="text-align:center;margin-top:14px">
+        <a onclick="goto('pg-login')" style="font-size:.77rem;color:var(--text3);cursor:pointer" data-i18n="common.back">← ফিরে যান</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 5 — ONBOARDING (Provider specific)
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-onboarding">
+  <div class="auth-bg" style="align-items:flex-start;padding-top:50px">
+    <div class="auth-box">
+      <!-- Progress dots -->
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:22px">
+        <div id="od1" style="height:6px;width:32px;border-radius:3px;background:var(--brand);transition:all .3s"></div>
+        <div id="od2" style="height:6px;width:32px;border-radius:3px;background:var(--border);transition:all .3s"></div>
+        <div id="od3" style="height:6px;width:32px;border-radius:3px;background:var(--border);transition:all .3s"></div>
+        <div id="od4" style="height:6px;width:32px;border-radius:3px;background:var(--border);transition:all .3s"></div>
+      </div>
+
+      <!-- Step 1: Basic Info -->
+      <div id="ob1">
+        <h2 class="auth-h" data-i18n="ob.p1">প্রোফাইল তৈরি করুন</h2>
+        <div style="text-align:center;margin:14px 0">
+          <div class="av" id="obAv" style="width:76px;height:76px;font-size:1.8rem;margin:0 auto 8px;cursor:pointer" onclick="document.getElementById('obFile').click()">🛠️</div>
+          <input type="file" id="obFile" accept="image/*" style="display:none" onchange="previewAv(this)"/>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('obFile').click()" data-i18n="ob.photo">ছবি আপলোড করুন</button>
+        </div>
+        <div class="field"><label class="field-label" data-i18n="field.name">পূর্ণ নাম</label><input type="text" class="input" id="obName"/></div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.phone">মোবাইল</label>
+          <div class="phone-row"><span class="phone-pre">+880</span><input type="tel" class="input" id="obPhone" placeholder="01XXXXXXXXX" maxlength="11"/></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="obGo(2)" data-i18n="common.next">পরবর্তী →</button>
+      </div>
+
+      <!-- Step 2: Skills & Rate -->
+      <div id="ob2" style="display:none">
+        <h2 class="auth-h" data-i18n="ob.p2">আপনার পেশা ও রেট</h2>
+        <p class="auth-sub" data-i18n="ob.p2sub">গ্রাহকরা এই তথ্য দেখবেন</p>
+        <div class="field">
+          <label class="field-label" data-i18n="field.skill">প্রধান পেশা</label>
+          <select class="input select" id="obSkill">
+            <option value="electrician" data-i18n="cat.electric">ইলেকট্রিশিয়ান</option>
+            <option value="plumber" data-i18n="cat.plumber">প্লাম্বার</option>
+            <option value="ac" data-i18n="cat.ac">এসি মেকানিক</option>
+            <option value="painter" data-i18n="cat.painter">পেইন্টার</option>
+            <option value="cleaner" data-i18n="cat.cleaner">ক্লিনার</option>
+            <option value="carpenter" data-i18n="cat.carpenter">কার্পেন্টার</option>
+            <option value="welder" data-i18n="cat.welder">ওয়েল্ডার</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="ob.rate">ঘণ্টা প্রতি রেট (৳)</label>
+          <input type="number" class="input" id="obRate" placeholder="500" min="100" max="5000"/>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="ob.exp">অভিজ্ঞতা (বছর)</label>
+          <input type="number" class="input" id="obExp" placeholder="3" min="0" max="50"/>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="ob.bio">সংক্ষিপ্ত পরিচিতি</label>
+          <textarea class="input" rows="3" id="obBio" placeholder="আপনার সম্পর্কে কিছু লিখুন..." style="resize:none"></textarea>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="obGo(1)" data-i18n="common.back2">← পিছু</button>
+          <button class="btn btn-primary" style="flex:1" onclick="obGo(3)" data-i18n="common.next">পরবর্তী →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Language & Location -->
+      <div id="ob3" style="display:none">
+        <h2 class="auth-h" data-i18n="ob.p3">ভাষা ও অবস্থান</h2>
+        <label class="field-label" style="display:block;margin-bottom:8px" data-i18n="ob.lang">পছন্দের ভাষা</label>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <div class="role-card on" id="obLBn" onclick="obLang('bn')"><div class="ri">🇧🇩</div><span>বাংলা</span></div>
+          <div class="role-card" id="obLEn" onclick="obLang('en')"><div class="ri">🇬🇧</div><span>English</span></div>
+        </div>
+        <button class="btn btn-secondary btn-full" style="margin-bottom:8px" onclick="reqLoc()" data-i18n="ob.loc">📍 লোকেশন অনুমতি দিন</button>
+        <p id="locSt" style="text-align:center;font-size:.77rem;color:var(--text3);margin-bottom:14px"></p>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="obGo(2)" data-i18n="common.back2">← পিছু</button>
+          <button class="btn btn-primary" style="flex:1" onclick="obGo(4)" data-i18n="common.next">পরবর্তী →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Finish -->
+      <div id="ob4" style="display:none">
+        <h2 class="auth-h" data-i18n="ob.p4">সব প্রস্তুত!</h2>
+        <div style="background:var(--brand-bg);border-radius:var(--r-xl);padding:20px;margin:16px 0;border:1px solid rgba(14,165,160,.2)">
+          <div style="font-size:2rem;text-align:center;margin-bottom:12px">🎉</div>
+          <p style="font-size:.83rem;color:var(--text2);text-align:center;line-height:1.7" data-i18n="ob.doneMsg">আপনার প্রোভাইডার অ্যাকাউন্ট তৈরি হয়েছে। এখন KYC ভেরিফিকেশন সম্পন্ন করুন এবং কাজ শুরু করুন!</p>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" onclick="finishOb()" data-i18n="ob.start">শুরু করা যাক! 🚀</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 6 — DASHBOARD
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-dashboard">
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <div class="nav-logo-box"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+      <span class="nav-title t-brand">Nexus-<em>Pro</em></span>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-btn" onclick="goto('pg-notifications')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="ndot"></div>
+      </button>
+      <button class="nav-btn" onclick="goto('pg-profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="content">
+    <!-- Hero -->
+    <div class="dash-hero">
+      <div class="dash-top">
+        <div>
+          <div class="dash-greeting" data-i18n="dash.greeting">আজকের সুপ্রভাত 👋</div>
+          <div class="dash-name" id="dashName">রহিম মিয়া</div>
+        </div>
+        <div class="av dash-av" id="dashAv">র</div>
+      </div>
+      <div class="dash-stat-row">
+        <div class="dash-stat">
+          <div class="v">৳<span id="dashEarn">3,450</span></div>
+          <div class="l" data-i18n="dash.todayEarn">আজকের আয়</div>
+          <div class="delta up" id="dashDelta">↑ ১৮% গতকালের চেয়ে</div>
+        </div>
+        <div class="dash-stat">
+          <div class="v"><span id="dashJobs">4</span></div>
+          <div class="l" data-i18n="dash.todayJobs">আজকের কাজ</div>
+          <div class="delta up">↑ ২টি নতুন অনুরোধ</div>
+        </div>
+        <div class="dash-stat">
+          <div class="v">⭐<span id="dashRating">4.8</span></div>
+          <div class="l" data-i18n="dash.rating">গড় রেটিং</div>
+          <div class="delta up">↑ চমৎকার!</div>
+        </div>
+        <div class="dash-stat">
+          <div class="v"><span id="dashPending">2</span></div>
+          <div class="l" data-i18n="dash.pending">অপেক্ষমাণ</div>
+          <div class="delta" style="color:rgba(255,255,255,.5)">নতুন অনুরোধ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Online Toggle -->
+    <div class="status-bar">
+      <div>
+        <div style="font-size:.83rem;font-weight:700" data-i18n="dash.status">আপনার স্ট্যাটাস</div>
+        <div style="font-size:.73rem;color:var(--text3);margin-top:2px" data-i18n="dash.statusSub">অনলাইনে থাকলে নতুন জব পাবেন</div>
+      </div>
+      <div class="online-pill on" id="onlinePill" onclick="toggleOnline()">
+        <div class="dot"></div>
+        <span id="onlineTxt" data-i18n="dash.online">অনলাইন</span>
+      </div>
+    </div>
+
+    <!-- Pending Job Requests -->
+    <div class="sec-head">
+      <h3 data-i18n="dash.newReq">নতুন অনুরোধ</h3>
+      <a onclick="goto('pg-jobs')" data-i18n="dash.allJobs">সব দেখুন</a>
+    </div>
+    <div id="pendingJobs">
+      <div class="job-card" onclick="goto('pg-job-detail')">
+        <div class="job-card-top">
+          <div class="av" style="width:44px;height:44px;font-size:.9rem;background:#EEF2FF;color:#4F46E5">করি</div>
+          <div class="job-info">
+            <h3>করিম সাহেব</h3>
+            <p>ইলেকট্রিশিয়ান — ফ্যান ইনস্টলেশন</p>
+          </div>
+          <div class="badge badge-warn" data-i18n="status.new">নতুন</div>
+        </div>
+        <div class="job-card-meta">
+          <span>📍 মিরপুর-১, ঢাকা</span>
+          <span>⏰ আজ, বিকেল ৩টা</span>
+          <span>⏱ ২ ঘণ্টা</span>
+        </div>
+        <div class="job-card-footer">
+          <span style="font-size:.77rem;color:var(--text3)">bKash দিয়ে পেমেন্ট</span>
+          <span class="job-price">৳১,০০০</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-danger btn-sm" style="flex:1" onclick="event.stopPropagation();rejectJob(this)" data-i18n="job.reject">প্রত্যাখ্যান</button>
+          <button class="btn btn-primary btn-sm" style="flex:1" onclick="event.stopPropagation();acceptJob(this)" data-i18n="job.accept">গ্রহণ করুন ✓</button>
+        </div>
+      </div>
+      <div class="job-card" onclick="goto('pg-job-detail')">
+        <div class="job-card-top">
+          <div class="av" style="width:44px;height:44px;font-size:.9rem;background:#FEF3C7;color:#92400E">সা</div>
+          <div class="job-info">
+            <h3>সালমা বেগম</h3>
+            <p>প্লাম্বার — পানির লাইন ঠিক</p>
+          </div>
+          <div class="badge badge-warn" data-i18n="status.new">নতুন</div>
+        </div>
+        <div class="job-card-meta">
+          <span>📍 উত্তরা, ঢাকা</span>
+          <span>⏰ কাল, সকাল ১০টা</span>
+          <span>⏱ ৩ ঘণ্টা</span>
+        </div>
+        <div class="job-card-footer">
+          <span style="font-size:.77rem;color:var(--text3)">ক্যাশ পেমেন্ট</span>
+          <span class="job-price">৳১,৩৫০</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-danger btn-sm" style="flex:1" onclick="event.stopPropagation();rejectJob(this)" data-i18n="job.reject">প্রত্যাখ্যান</button>
+          <button class="btn btn-primary btn-sm" style="flex:1" onclick="event.stopPropagation();acceptJob(this)" data-i18n="job.accept">গ্রহণ করুন ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Earnings Chart -->
+    <div class="sec-head">
+      <h3 data-i18n="dash.weeklyEarn">সাপ্তাহিক আয়</h3>
+    </div>
+    <div class="card" style="margin:0 16px 10px;padding:16px">
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px">
+        <span style="font-size:1.5rem;font-weight:800;color:var(--brand)">৳১৮,৬৫০</span>
+        <span style="font-size:.78rem;color:var(--text3)" data-i18n="dash.thisWeek">এই সপ্তাহ</span>
+        <span style="font-size:.75rem;color:#4ADE80;font-weight:700;margin-left:4px">↑ ১২%</span>
+      </div>
+      <div class="chart-bars" id="earningChart">
+        <div class="chart-bar-wrap"><div class="chart-bar" style="height:40%"></div><div class="chart-label">রবি</div></div>
+        <div class="chart-bar-wrap"><div class="chart-bar" style="height:65%"></div><div class="chart-label">সোম</div></div>
+        <div class="chart-bar-wrap"><div class="chart-bar" style="height:55%"></div><div class="chart-label">মঙ্গল</div></div>
+        <div class="chart-bar-wrap"><div class="chart-bar" style="height:80%"></div><div class="chart-label">বুধ</div></div>
+        <div class="chart-bar-wrap"><div class="chart-bar" style="height:70%"></div><div class="chart-label">বৃহ</div></div>
+        <div class="chart-bar-wrap"><div class="chart-bar" style="height:90%"></div><div class="chart-label">শুক্র</div></div>
+        <div class="chart-bar active" style="flex:1;height:50%;border-radius:4px 4px 0 0"></div>
+      </div>
+    </div>
+    <div style="height:10px"></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bot-nav">
+    <div class="bnav on" onclick="switchBNav('dashboard')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span data-i18n="nav.dash">ড্যাশবোর্ড</span>
+    </div>
+    <div class="bnav" onclick="switchBNav('jobs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      <span data-i18n="nav.jobs">জবস</span>
+    </div>
+    <div class="bnav-fab-wrap">
+      <button class="bnav-fab" onclick="goto('pg-active-booking')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+      </button>
+    </div>
+    <div class="bnav" onclick="switchBNav('earnings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span data-i18n="nav.earn">আয়</span>
+    </div>
+    <div class="bnav" onclick="switchBNav('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span data-i18n="nav.profile">প্রোফাইল</span>
+    </div>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 7 — JOBS LIST
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-jobs">
+  <nav class="top-nav">
+    <div class="nav-brand"><span style="font-size:1rem;font-weight:700" data-i18n="nav.jobs">সকল জব</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-ghost btn-sm" onclick="showModal('filterModal')" data-i18n="search.filter">ফিল্টার</button>
+    </div>
+  </nav>
+  <div class="content" style="padding-bottom:20px">
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:4px" id="jobTabs">
+      <button class="tab-btn on" style="border-radius:0;padding:12px 16px;border-bottom:2px solid var(--brand);margin-bottom:-2px" onclick="filterJobs('new')" data-i18n="job.new">নতুন (2)</button>
+      <button class="tab-btn" style="border-radius:0;padding:12px 16px" onclick="filterJobs('accepted')" data-i18n="job.accepted">গৃহীত</button>
+      <button class="tab-btn" style="border-radius:0;padding:12px 16px" onclick="filterJobs('done')" data-i18n="job.done">সম্পন্ন</button>
+    </div>
+    <div id="jobsList">
+      <div class="job-card" onclick="goto('pg-job-detail')">
+        <div class="job-card-top">
+          <div class="av" style="width:44px;height:44px;font-size:.9rem;background:#EEF2FF;color:#4F46E5">করি</div>
+          <div class="job-info"><h3>করিম সাহেব</h3><p>ইলেকট্রিশিয়ান — ফ্যান ইনস্টলেশন</p></div>
+          <div class="badge badge-warn">নতুন</div>
+        </div>
+        <div class="job-card-meta">
+          <span>📍 মিরপুর-১</span><span>⏰ আজ ৩টা</span><span>⏱ ২ঘ</span>
+        </div>
+        <div class="job-card-footer">
+          <span style="font-size:.77rem;color:var(--text3)">bKash</span>
+          <span class="job-price">৳১,০০০</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-danger btn-sm" style="flex:1" onclick="event.stopPropagation();rejectJob(this)" data-i18n="job.reject">প্রত্যাখ্যান</button>
+          <button class="btn btn-primary btn-sm" style="flex:1" onclick="event.stopPropagation();acceptJob(this)" data-i18n="job.accept">গ্রহণ করুন ✓</button>
+        </div>
+      </div>
+      <div class="job-card" onclick="goto('pg-job-detail')">
+        <div class="job-card-top">
+          <div class="av" style="width:44px;height:44px;font-size:.9rem;background:#FEF3C7;color:#92400E">সা</div>
+          <div class="job-info"><h3>সালমা বেগম</h3><p>প্লাম্বার — পানির লাইন</p></div>
+          <div class="badge badge-warn">নতুন</div>
+        </div>
+        <div class="job-card-meta">
+          <span>📍 উত্তরা</span><span>⏰ কাল ১০টা</span><span>⏱ ৩ঘ</span>
+        </div>
+        <div class="job-card-footer">
+          <span style="font-size:.77rem;color:var(--text3)">ক্যাশ</span>
+          <span class="job-price">৳১,৩৫০</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-danger btn-sm" style="flex:1" onclick="event.stopPropagation();rejectJob(this)" data-i18n="job.reject">প্রত্যাখ্যান</button>
+          <button class="btn btn-primary btn-sm" style="flex:1" onclick="event.stopPropagation();acceptJob(this)" data-i18n="job.accept">গ্রহণ করুন ✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <nav class="bot-nav">
+    <div class="bnav" onclick="switchBNav('dashboard')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span data-i18n="nav.dash">ড্যাশবোর্ড</span></div>
+    <div class="bnav on" onclick="switchBNav('jobs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span data-i18n="nav.jobs">জবস</span></div>
+    <div class="bnav-fab-wrap"><button class="bnav-fab" onclick="goto('pg-active-booking')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></button></div>
+    <div class="bnav" onclick="switchBNav('earnings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span data-i18n="nav.earn">আয়</span></div>
+    <div class="bnav" onclick="switchBNav('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span data-i18n="nav.profile">প্রোফাইল</span></div>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 8 — JOB DETAIL
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-job-detail">
+  <nav class="top-nav">
+    <button class="btn-icon" onclick="goto('pg-jobs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <span style="flex:1;font-weight:700" data-i18n="job.detail">জবের বিস্তারিত</span>
+  </nav>
+  <div class="content" style="padding-bottom:100px">
+    <!-- Customer Info -->
+    <div class="card" style="margin:14px 16px">
+      <div style="padding:16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="av" style="width:52px;height:52px;font-size:1rem;background:#EEF2FF;color:#4F46E5">করি</div>
+          <div style="flex:1">
+            <div style="font-size:.95rem;font-weight:700">করিম সাহেব</div>
+            <div style="font-size:.77rem;color:var(--text2);margin-top:2px">⭐ ৪.৫ • ১২টি বুকিং</div>
+          </div>
+          <a href="tel:+8801712345678" class="btn btn-secondary btn-sm">📞 কল</a>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:10px">
+            <div style="font-size:.7rem;color:var(--text3);margin-bottom:3px" data-i18n="job.service">সেবার ধরন</div>
+            <div style="font-size:.85rem;font-weight:700">ইলেকট্রিশিয়ান</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:10px">
+            <div style="font-size:.7rem;color:var(--text3);margin-bottom:3px" data-i18n="job.duration">সময়কাল</div>
+            <div style="font-size:.85rem;font-weight:700">২ ঘণ্টা</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:10px">
+            <div style="font-size:.7rem;color:var(--text3);margin-bottom:3px" data-i18n="job.schedule">তারিখ ও সময়</div>
+            <div style="font-size:.85rem;font-weight:700">আজ, বিকেল ৩:০০</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:var(--r-md);padding:10px">
+            <div style="font-size:.7rem;color:var(--text3);margin-bottom:3px" data-i18n="job.payment">পেমেন্ট</div>
+            <div style="font-size:.85rem;font-weight:700">💙 bKash</div>
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px" data-i18n="job.address">ঠিকানা</div>
+          <div style="font-size:.85rem;line-height:1.6;color:var(--text2)">বাড়ি-১২, রোড-৩, মিরপুর-১, ঢাকা-১২১৬</div>
+        </div>
+        <div>
+          <div style="font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px" data-i18n="job.desc">বিবরণ</div>
+          <div style="font-size:.83rem;line-height:1.65;color:var(--text2)">২টি সিলিং ফ্যান লাগাতে হবে। ওয়্যারিং আছে। শুধু ফ্যান ফিট করতে হবে। ফ্যান কিনা আছে।</div>
+        </div>
+      </div>
+    </div>
+    <!-- Price breakdown -->
+    <div class="card" style="margin:0 16px">
+      <div style="padding:14px 16px">
+        <div style="font-size:.85rem;font-weight:700;margin-bottom:10px" data-i18n="job.priceBreak">মূল্য বিভাজন</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:.83rem"><span data-i18n="job.baseRate">বেস রেট (৳৫০০ × ২ঘ)</span><span>৳১,০০০</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:.83rem;color:var(--red)"><span data-i18n="job.commission">Nexus কমিশন (১৫%)</span><span>-৳১৫০</span></div>
+        <div style="height:1px;background:var(--border);margin:10px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:.95rem;font-weight:800"><span data-i18n="job.yourEarn">আপনার আয়</span><span style="color:var(--brand)">৳৮৫০</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:12px 16px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:10px;z-index:50">
+    <button class="btn btn-danger" style="flex:1" onclick="rejectJobFull()" data-i18n="job.reject">প্রত্যাখ্যান</button>
+    <button class="btn btn-primary" style="flex:1" onclick="acceptJobFull()" data-i18n="job.accept">গ্রহণ করুন ✓</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 9 — ACTIVE BOOKING
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-active-booking">
+  <nav class="top-nav">
+    <button class="btn-icon" onclick="goto('pg-dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <span style="flex:1;font-weight:700" data-i18n="active.title">চলমান কাজ</span>
+  </nav>
+  <div class="content" style="padding-bottom:100px">
+    <!-- Active job card -->
+    <div class="active-job-card">
+      <div class="ajc-header">
+        <div class="av" style="width:44px;height:44px;font-size:.95rem;background:rgba(255,255,255,.2);color:#fff">করি</div>
+        <div style="flex:1">
+          <div style="font-weight:800;color:#fff;font-size:.95rem">করিম সাহেব</div>
+          <div style="font-size:.75rem;color:rgba(255,255,255,.7);margin-top:2px" data-i18n="active.inProgress">কাজ চলছে...</div>
+        </div>
+        <div class="badge" style="background:rgba(255,255,255,.2);color:#fff;font-size:.72rem" data-i18n="status.ongoing">চলমান</div>
+      </div>
+      <div class="ajc-body">
+        <div class="ajc-row">
+          <span class="ajc-label" data-i18n="job.service">সেবা</span>
+          <span class="ajc-val">ফ্যান ইনস্টলেশন</span>
+        </div>
+        <div class="ajc-row">
+          <span class="ajc-label" data-i18n="active.started">শুরু হয়েছে</span>
+          <span class="ajc-val">৩:০৫ PM</span>
+        </div>
+        <div class="ajc-row">
+          <span class="ajc-label" data-i18n="active.elapsed">অতিবাহিত</span>
+          <span class="ajc-val" id="elapsedTime" style="color:var(--brand)">০০:১৫:৩২</span>
+        </div>
+        <div class="ajc-row">
+          <span class="ajc-label" data-i18n="active.earning">আনুমানিক আয়</span>
+          <span class="ajc-val" style="color:var(--brand);font-size:1rem;font-weight:800" id="liveEarn">৳১২৭</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Address -->
+    <div class="card" style="margin:10px 16px;padding:14px">
+      <div style="font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:5px" data-i18n="job.address">ঠিকানা</div>
+      <div style="font-size:.85rem;line-height:1.6">বাড়ি-১২, রোড-৩, মিরপুর-১, ঢাকা</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="showToast(t('toast.mapOpen'),'info')" data-i18n="active.map">🗺️ ম্যাপে দেখুন</button>
+    </div>
+
+    <!-- OTP section -->
+    <div class="card" style="margin:10px 16px;padding:16px">
+      <div style="font-weight:700;font-size:.9rem;margin-bottom:6px" data-i18n="active.otpTitle">কাজ সম্পন্নের OTP</div>
+      <p style="font-size:.78rem;color:var(--text2);margin-bottom:14px;line-height:1.6" data-i18n="active.otpSub">গ্রাহক আপনাকে ৬-সংখ্যার কোড দেবেন। কাজ শেষে সেই কোড এখানে দিন।</p>
+      <div class="otp-row" id="activeOtpInputs">
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric" style="width:40px;height:46px;font-size:1.2rem"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric" style="width:40px;height:46px;font-size:1.2rem"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric" style="width:40px;height:46px;font-size:1.2rem"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric" style="width:40px;height:46px;font-size:1.2rem"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric" style="width:40px;height:46px;font-size:1.2rem"/>
+        <input type="tel" class="otp-box" maxlength="1" inputmode="numeric" style="width:40px;height:46px;font-size:1.2rem"/>
+      </div>
+    </div>
+  </div>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:12px 16px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:10px;z-index:50">
+    <button class="btn btn-secondary" style="flex:1" onclick="goto('pg-chat')" data-i18n="active.chat">💬 চ্যাট</button>
+    <button class="btn btn-primary" style="flex:1" onclick="completeJob()" data-i18n="active.complete">কাজ সম্পন্ন ✓</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 10 — SHOP / MATERIAL STORE
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-shop">
+  <nav class="top-nav">
+    <div class="nav-brand"><span style="font-size:1rem;font-weight:700" data-i18n="nav.shop">আমার শপ</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-primary btn-sm" onclick="goto('pg-shop-add')" data-i18n="shop.add">+ পণ্য যোগ</button>
+    </div>
+  </nav>
+  <div class="content" style="padding-bottom:20px">
+    <!-- Shop stats -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:14px 16px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;text-align:center">
+        <div style="font-size:1.2rem;font-weight:800;color:var(--brand)">14</div>
+        <div style="font-size:.68rem;color:var(--text3);margin-top:2px" data-i18n="shop.products">পণ্য</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;text-align:center">
+        <div style="font-size:1.2rem;font-weight:800;color:var(--brand)">৳8.4k</div>
+        <div style="font-size:.68rem;color:var(--text3);margin-top:2px" data-i18n="shop.sales">বিক্রয়</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;text-align:center">
+        <div style="font-size:1.2rem;font-weight:800;color:var(--yellow)">3</div>
+        <div style="font-size:.68rem;color:var(--text3);margin-top:2px" data-i18n="shop.orders">অর্ডার</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px" id="productGrid">
+      <div class="product-card">
+        <div class="product-img">🔌</div>
+        <div class="product-info">
+          <h4>ইলেকট্রিক সুইচ</h4>
+          <div class="price">৳১২০</div>
+          <div class="stock">স্টক: ৪৫ পিস</div>
+        </div>
+        <div style="display:flex;gap:6px;padding:0 10px 10px">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="goto('pg-shop-edit')" data-i18n="shop.edit">সম্পাদনা</button>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">💡</div>
+        <div class="product-info">
+          <h4>LED বাল্ব ১৮W</h4>
+          <div class="price">৳২৫০</div>
+          <div class="stock">স্টক: ২০ পিস</div>
+        </div>
+        <div style="display:flex;gap:6px;padding:0 10px 10px">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="goto('pg-shop-edit')" data-i18n="shop.edit">সম্পাদনা</button>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">🔧</div>
+        <div class="product-info">
+          <h4>তামার তার ১মি</h4>
+          <div class="price">৳৮০</div>
+          <div class="stock">স্টক: ১০০ মি.</div>
+        </div>
+        <div style="display:flex;gap:6px;padding:0 10px 10px">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="goto('pg-shop-edit')" data-i18n="shop.edit">সম্পাদনা</button>
+        </div>
+      </div>
+      <div class="product-card" style="border:2px dashed var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:140px" onclick="goto('pg-shop-add')">
+        <div style="font-size:2rem;margin-bottom:8px">➕</div>
+        <div style="font-size:.8rem;color:var(--text3);font-weight:600" data-i18n="shop.addNew">নতুন পণ্য যোগ করুন</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 11 — SHOP ADD PRODUCT
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-shop-add">
+  <nav class="top-nav">
+    <button class="btn-icon" onclick="goto('pg-shop')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <span style="flex:1;font-weight:700" data-i18n="shop.addProduct">নতুন পণ্য যোগ করুন</span>
+  </nav>
+  <div class="content" style="padding-bottom:100px">
+    <div style="margin:16px">
+      <div style="border:2px dashed var(--border);border-radius:var(--r-xl);height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;margin-bottom:16px" onclick="document.getElementById('prodImg').click()">
+        <div style="font-size:2rem;margin-bottom:8px">📷</div>
+        <div style="font-size:.8rem;color:var(--text3)" data-i18n="shop.uploadImg">পণ্যের ছবি আপলোড করুন</div>
+        <input type="file" id="prodImg" accept="image/*" style="display:none"/>
+      </div>
+      <div class="field"><label class="field-label" data-i18n="shop.prodName">পণ্যের নাম</label><input type="text" class="input" placeholder="যেমন: LED বাল্ব ১৮W"/></div>
+      <div class="field"><label class="field-label" data-i18n="shop.prodCat">ক্যাটেগরি</label>
+        <select class="input select">
+          <option>ইলেকট্রিক উপকরণ</option><option>প্লাম্বিং উপকরণ</option>
+          <option>রং ও সরঞ্জাম</option><option>সাধারণ হার্ডওয়্যার</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="field" style="flex:1"><label class="field-label" data-i18n="shop.price">মূল্য (৳)</label><input type="number" class="input" placeholder="250"/></div>
+        <div class="field" style="flex:1"><label class="field-label" data-i18n="shop.stock">স্টক পরিমাণ</label><input type="number" class="input" placeholder="50"/></div>
+      </div>
+      <div class="field"><label class="field-label" data-i18n="shop.unit">একক</label>
+        <select class="input select"><option>পিস</option><option>মিটার</option><option>কেজি</option><option>লিটার</option></select>
+      </div>
+      <div class="field"><label class="field-label" data-i18n="shop.desc">বিবরণ</label><textarea class="input" rows="3" style="resize:none" placeholder="পণ্যের বিস্তারিত তথ্য..."></textarea></div>
+    </div>
+  </div>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:12px 16px;background:var(--surface);border-top:1px solid var(--border);z-index:50">
+    <button class="btn btn-primary btn-full btn-lg" onclick="addProduct()" data-i18n="shop.save">পণ্য সংরক্ষণ করুন</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 12 — SHOP EDIT PRODUCT
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-shop-edit">
+  <nav class="top-nav">
+    <button class="btn-icon" onclick="goto('pg-shop')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <span style="flex:1;font-weight:700" data-i18n="shop.editProduct">পণ্য সম্পাদনা</span>
+    <button class="btn btn-danger btn-sm" onclick="deleteProduct()" data-i18n="shop.delete">মুছুন</button>
+  </nav>
+  <div class="content" style="padding-bottom:100px">
+    <div style="margin:16px">
+      <div style="border:2px dashed var(--brand);border-radius:var(--r-xl);height:140px;background:var(--brand-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:16px;font-size:3rem">🔌</div>
+      <div class="field"><label class="field-label" data-i18n="shop.prodName">পণ্যের নাম</label><input type="text" class="input" value="ইলেকট্রিক সুইচ"/></div>
+      <div style="display:flex;gap:10px">
+        <div class="field" style="flex:1"><label class="field-label" data-i18n="shop.price">মূল্য (৳)</label><input type="number" class="input" value="120"/></div>
+        <div class="field" style="flex:1"><label class="field-label" data-i18n="shop.stock">স্টক</label><input type="number" class="input" value="45"/></div>
+      </div>
+      <div class="field"><label class="field-label" data-i18n="shop.desc">বিবরণ</label><textarea class="input" rows="3" style="resize:none">উন্নত মানের ইলেকট্রিক সুইচ, ১৫ অ্যাম্পিয়ার।</textarea></div>
+    </div>
+  </div>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:12px 16px;background:var(--surface);border-top:1px solid var(--border);z-index:50">
+    <button class="btn btn-primary btn-full btn-lg" onclick="saveProduct()" data-i18n="shop.update">আপডেট করুন</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 13 — EARNINGS
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-earnings">
+  <nav class="top-nav">
+    <div class="nav-brand"><span style="font-size:1rem;font-weight:700" data-i18n="nav.earn">আয়ের বিবরণ</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-ghost btn-sm" onclick="showModal('withdrawModal')" data-i18n="earn.withdraw">উত্তোলন</button>
+    </div>
+  </nav>
+  <div class="content" style="padding-bottom:80px">
+    <!-- Balance hero -->
+    <div style="background:linear-gradient(145deg,var(--navy),var(--navy2));padding:24px 20px;">
+      <div style="font-size:.8rem;color:rgba(255,255,255,.55);margin-bottom:4px" data-i18n="earn.available">উত্তোলনযোগ্য ব্যালেন্স</div>
+      <div style="font-size:2.2rem;font-weight:800;color:#fff;letter-spacing:-.02em;font-family:var(--fn-hd)">৳<span id="earnBal">12,350</span></div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.45);margin-top:4px" data-i18n="earn.pending">মুলতুবি: ৳৩,৪৫০</div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);flex:1" onclick="showModal('withdrawModal')" data-i18n="earn.withdraw">💸 উত্তোলন</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);flex:1" onclick="showToast(t('toast.coming'),'info')" data-i18n="earn.statement">📄 স্টেটমেন্ট</button>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px">
+      <div class="card" style="padding:14px">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:4px" data-i18n="earn.today">আজকের আয়</div>
+        <div style="font-size:1.2rem;font-weight:800;color:var(--brand)">৳৩,৪৫০</div>
+        <div style="font-size:.7rem;color:#4ADE80;margin-top:3px;font-weight:600">↑ ১৮%</div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:4px" data-i18n="earn.month">এই মাস</div>
+        <div style="font-size:1.2rem;font-weight:800;color:var(--brand)">৳৪২,৮০০</div>
+        <div style="font-size:.7rem;color:#4ADE80;margin-top:3px;font-weight:600">↑ ৯%</div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:4px" data-i18n="earn.jobs">সম্পন্ন কাজ</div>
+        <div style="font-size:1.2rem;font-weight:800;color:var(--brand)">২৩৪</div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:4px" data-i18n="earn.commission">মোট কমিশন</div>
+        <div style="font-size:1.2rem;font-weight:800;color:var(--red)">৳৬,৪২০</div>
+      </div>
+    </div>
+
+    <!-- Transaction list -->
+    <div class="sec-head"><h3 data-i18n="earn.txHistory">লেনদেনের ইতিহাস</h3></div>
+    <div class="card-flat" style="margin:0 16px">
+      <div style="padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:var(--r-md);background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem">💰</div>
+        <div style="flex:1"><div style="font-size:.85rem;font-weight:600">করিম সাহেব</div><div style="font-size:.73rem;color:var(--text3)">ফ্যান ইনস্টলেশন • আজ ৫:৩০ PM</div></div>
+        <div style="font-size:.92rem;font-weight:700;color:var(--green)">+৳৮৫০</div>
+      </div>
+      <div style="padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:var(--r-md);background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem">💰</div>
+        <div style="flex:1"><div style="font-size:.85rem;font-weight:600">রাহেলা আক্তার</div><div style="font-size:.73rem;color:var(--text3)">AC সার্ভিসিং • আজ ২:০০ PM</div></div>
+        <div style="font-size:.92rem;font-weight:700;color:var(--green)">+৳১,৭০০</div>
+      </div>
+      <div style="padding:13px 16px;display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:var(--r-md);background:rgba(239,68,68,.08);display:flex;align-items:center;justify-content:center;font-size:1.1rem">🏦</div>
+        <div style="flex:1"><div style="font-size:.85rem;font-weight:600" data-i18n="earn.withdrawal">উত্তোলন</div><div style="font-size:.73rem;color:var(--text3)">bKash • গতকাল</div></div>
+        <div style="font-size:.92rem;font-weight:700;color:var(--red)">-৳৫,০০০</div>
+      </div>
+    </div>
+  </div>
+  <nav class="bot-nav">
+    <div class="bnav" onclick="switchBNav('dashboard')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span data-i18n="nav.dash">ড্যাশবোর্ড</span></div>
+    <div class="bnav" onclick="switchBNav('jobs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span data-i18n="nav.jobs">জবস</span></div>
+    <div class="bnav-fab-wrap"><button class="bnav-fab" onclick="goto('pg-active-booking')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></button></div>
+    <div class="bnav on" onclick="switchBNav('earnings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span data-i18n="nav.earn">আয়</span></div>
+    <div class="bnav" onclick="switchBNav('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span data-i18n="nav.profile">প্রোফাইল</span></div>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 14 — VERIFICATION (KYC)
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-verification">
+  <nav class="top-nav">
+    <button class="btn-icon" onclick="goto('pg-profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <span style="flex:1;font-weight:700" data-i18n="verif.title">KYC ভেরিফিকেশন</span>
+  </nav>
+  <div class="content" style="padding-bottom:20px">
+    <!-- Status banner -->
+    <div style="margin:14px 16px;background:var(--accent-bg);border-radius:var(--r-xl);padding:14px;border:1px solid rgba(249,115,22,.2);display:flex;align-items:center;gap:12px">
+      <div style="font-size:1.8rem">⏳</div>
+      <div>
+        <div style="font-weight:700;font-size:.88rem;color:var(--accent)" data-i18n="verif.pending">ভেরিফিকেশন অপেক্ষমাণ</div>
+        <div style="font-size:.75rem;color:var(--text2);margin-top:2px" data-i18n="verif.pendingSub">সম্পূর্ণ ভেরিফিকেশন সম্পন্ন করুন</div>
+      </div>
+    </div>
+
+    <div style="padding:0 16px">
+      <div style="padding:14px 0">
+        <div class="verif-step done">
+          <div class="vstep-dot">✓</div>
+          <div class="vstep-body"><h4 data-i18n="verif.mobile">মোবাইল ভেরিফিকেশন</h4><p data-i18n="verif.done">সম্পন্ন</p></div>
+        </div>
+        <div class="verif-step done">
+          <div class="vstep-dot">✓</div>
+          <div class="vstep-body"><h4 data-i18n="verif.email">ইমেইল ভেরিফিকেশন</h4><p data-i18n="verif.done">সম্পন্ন</p></div>
+        </div>
+        <div class="verif-step active">
+          <div class="vstep-dot" style="font-size:.85rem">→</div>
+          <div class="vstep-body">
+            <h4 data-i18n="verif.nid">জাতীয় পরিচয়পত্র (NID)</h4>
+            <p data-i18n="verif.nidSub">NID-এর সামনে ও পিছনের ছবি আপলোড করুন</p>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <div style="flex:1;height:70px;border:2px dashed var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:.72rem;color:var(--text3)" onclick="showToast(t('toast.uploadOk'),'info')">📷 সামনের দিক</div>
+              <div style="flex:1;height:70px;border:2px dashed var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:.72rem;color:var(--text3)" onclick="showToast(t('toast.uploadOk'),'info')">📷 পিছনের দিক</div>
+            </div>
+            <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="showToast(t('toast.submitted'),'success')" data-i18n="verif.submit">জমা দিন</button>
+          </div>
+        </div>
+        <div class="verif-step">
+          <div class="vstep-dot" style="font-size:.85rem">4</div>
+          <div class="vstep-body"><h4 data-i18n="verif.selfie">সেলফি ভেরিফিকেশন</h4><p data-i18n="verif.selfieSub">NID ধরে সেলফি তুলুন</p></div>
+        </div>
+        <div class="verif-step">
+          <div class="vstep-dot" style="font-size:.85rem">5</div>
+          <div class="vstep-body"><h4 data-i18n="verif.skill">স্কিল ভেরিফিকেশন</h4><p data-i18n="verif.skillSub">দক্ষতার সার্টিফিকেট / সনদ আপলোড করুন (ঐচ্ছিক)</p></div>
+        </div>
+        <div class="verif-step">
+          <div class="vstep-dot" style="font-size:.85rem">6</div>
+          <div class="vstep-body"><h4 data-i18n="verif.approved">অনুমোদন</h4><p data-i18n="verif.approvedSub">Nexus টিম ২৪-৪৮ ঘণ্টায় যাচাই করবে</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 15 — CHAT
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-chat">
+  <nav class="top-nav">
+    <button class="btn-icon" onclick="goto('pg-active-booking')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <div style="display:flex;align-items:center;gap:10px;flex:1">
+      <div class="av" style="width:34px;height:34px;font-size:.75rem;background:#EEF2FF;color:#4F46E5">করি</div>
+      <div>
+        <div style="font-weight:700;font-size:.88rem">করিম সাহেব</div>
+        <div style="font-size:.68rem;color:var(--green);display:flex;align-items:center;gap:3px"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span><span>অনলাইন</span></div>
+      </div>
+    </div>
+  </nav>
+  <div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px" id="chatArea">
+    <div style="max-width:78%">
+      <div style="background:var(--surface2);border-radius:14px;border-bottom-left-radius:3px;padding:10px 13px;font-size:.86rem;line-height:1.55">ভাই, কখন আসবেন? আমি বাসায় আছি।</div>
+      <div style="font-size:.67rem;color:var(--text3);margin-top:3px">৩:০২ PM</div>
+    </div>
+    <div style="max-width:78%;align-self:flex-end">
+      <div style="background:var(--brand);color:#fff;border-radius:14px;border-bottom-right-radius:3px;padding:10px 13px;font-size:.86rem;line-height:1.55">আমি ১০ মিনিটের মধ্যে পৌঁছাব।</div>
+      <div style="font-size:.67rem;color:var(--text3);margin-top:3px;text-align:right">৩:০৫ PM ✓✓</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface);border-top:1px solid var(--border)">
+    <input type="text" id="chatInput" style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-pill);padding:9px 14px;font-size:.86rem;color:var(--text);transition:border-color var(--t)" placeholder="বার্তা লিখুন..." onkeydown="if(event.key==='Enter')sendMsg()" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--border)'"/>
+    <button class="btn btn-primary" style="width:40px;height:40px;padding:0;border-radius:50%" onclick="sendMsg()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 16 — PROFILE
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-profile">
+  <nav class="top-nav">
+    <div class="nav-brand"><span style="font-size:1rem;font-weight:700" data-i18n="nav.profile">প্রোফাইল</span></div>
+    <div class="nav-actions">
+      <button class="nav-btn" onclick="goto('pg-settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </nav>
+  <div class="content" style="padding-bottom:80px">
+    <div class="profile-hero">
+      <div class="av profile-av" id="profAvDisp">র</div>
+      <div class="profile-name" id="profNameDisp">রহিম মিয়া</div>
+      <div class="profile-role">⚡ ইলেকট্রিশিয়ান • ঢাকা</div>
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px">
+        <div class="badge badge-success">✓ ভেরিফাইড</div>
+        <div class="badge badge-brand">🥇 গোল্ড</div>
+        <div class="online-pill on" style="padding:4px 10px;font-size:.7rem;cursor:default">
+          <div class="dot"></div><span>অনলাইন</span>
+        </div>
+      </div>
+    </div>
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="v">4.8</div><div class="l" data-i18n="wp.rating">রেটিং</div></div>
+      <div class="profile-stat"><div class="v">234</div><div class="l" data-i18n="wp.jobs">কাজ</div></div>
+      <div class="profile-stat"><div class="v">97%</div><div class="l" data-i18n="wp.completion">সম্পন্ন</div></div>
+    </div>
+
+    <div style="height:16px"></div>
+    <div class="card-flat" style="margin:0 16px">
+      <div class="menu-item" onclick="goto('pg-shop')">
+        <div class="menu-icon">🛒</div>
+        <div style="flex:1"><div class="menu-label" data-i18n="menu.shop">আমার শপ</div><div class="menu-sub">১৪টি পণ্য</div></div>
+        <span class="menu-arr">›</span>
+      </div>
+      <div class="menu-item" onclick="goto('pg-earnings')">
+        <div class="menu-icon">💰</div>
+        <div style="flex:1"><div class="menu-label" data-i18n="nav.earn">আয়ের বিবরণ</div><div class="menu-sub">৳১২,৩৫০ উপলব্ধ</div></div>
+        <span class="menu-arr">›</span>
+      </div>
+      <div class="menu-item" onclick="goto('pg-verification')">
+        <div class="menu-icon">🪪</div>
+        <div style="flex:1"><div class="menu-label" data-i18n="verif.title">KYC ভেরিফিকেশন</div><div class="menu-sub" style="color:var(--accent)" data-i18n="verif.pending">অপেক্ষমাণ</div></div>
+        <span class="menu-arr">›</span>
+      </div>
+      <div class="menu-item" onclick="goto('pg-notifications')">
+        <div class="menu-icon">🔔</div>
+        <div style="flex:1"><div class="menu-label" data-i18n="menu.notifs">নোটিফিকেশন</div></div>
+        <span class="menu-arr">›</span>
+      </div>
+      <div class="menu-item" onclick="goto('pg-settings')">
+        <div class="menu-icon">⚙️</div>
+        <div style="flex:1"><div class="menu-label" data-i18n="menu.settings">সেটিংস</div></div>
+        <span class="menu-arr">›</span>
+      </div>
+      <div class="menu-item" onclick="showModal('helpModal')">
+        <div class="menu-icon">❓</div>
+        <div style="flex:1"><div class="menu-label" data-i18n="menu.help">সাহায্য ও সাপোর্ট</div></div>
+        <span class="menu-arr">›</span>
+      </div>
+      <div class="menu-item" onclick="doLogout()" style="color:var(--red)">
+        <div class="menu-icon" style="background:rgba(239,68,68,.08)">🚪</div>
+        <div style="flex:1"><div class="menu-label" style="color:var(--red)" data-i18n="menu.logout">লগআউট</div></div>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:.7rem;color:var(--text3);margin:16px">Nexus-Serv BD Provider v5.0 • Made in Bangladesh 🇧🇩</p>
+  </div>
+  <nav class="bot-nav">
+    <div class="bnav" onclick="switchBNav('dashboard')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span data-i18n="nav.dash">ড্যাশবোর্ড</span></div>
+    <div class="bnav" onclick="switchBNav('jobs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span data-i18n="nav.jobs">জবস</span></div>
+    <div class="bnav-fab-wrap"><button class="bnav-fab" onclick="goto('pg-active-booking')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></button></div>
+    <div class="bnav" onclick="switchBNav('earnings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span data-i18n="nav.earn">আয়</span></div>
+    <div class="bnav on" onclick="switchBNav('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span data-i18n="nav.profile">প্রোফাইল</span></div>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 17 — NOTIFICATIONS
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-notifications">
+  <nav class="top-nav">
+    <button class="btn-icon" onclick="goto('pg-dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <span style="flex:1;font-weight:700" data-i18n="menu.notifs">নোটিফিকেশন</span>
+    <button onclick="markAllRead()" style="font-size:.77rem;color:var(--brand);font-weight:700" data-i18n="notif.markAll">সব পড়া চিহ্নিত</button>
+  </nav>
+  <div class="content" style="padding-bottom:20px">
+    <div id="notifList">
+      <div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--brand-bg);cursor:pointer">
+        <div style="font-size:1.4rem">🔔</div>
+        <div style="flex:1">
+          <div style="font-size:.86rem;font-weight:700" data-i18n="notif.newJob">নতুন জব অনুরোধ!</div>
+          <div style="font-size:.77rem;color:var(--text2);margin-top:2px;line-height:1.5">করিম সাহেব ইলেকট্রিশিয়ান সেবা চাইছেন — মিরপুর-১</div>
+        </div>
+        <div style="font-size:.68rem;color:var(--text3)">২ মি.</div>
+      </div>
+      <div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--brand-bg);cursor:pointer">
+        <div style="font-size:1.4rem">⭐</div>
+        <div style="flex:1">
+          <div style="font-size:.86rem;font-weight:700" data-i18n="notif.newReview">নতুন রিভিউ পেয়েছেন!</div>
+          <div style="font-size:.77rem;color:var(--text2);margin-top:2px;line-height:1.5">রাহেলা আক্তার আপনাকে ৫ স্টার দিয়েছেন</div>
+        </div>
+        <div style="font-size:.68rem;color:var(--text3)">১ ঘ.</div>
+      </div>
+      <div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer">
+        <div style="font-size:1.4rem">💰</div>
+        <div style="flex:1">
+          <div style="font-size:.86rem;font-weight:700" data-i18n="notif.payment">পেমেন্ট পেয়েছেন!</div>
+          <div style="font-size:.77rem;color:var(--text2);margin-top:2px;line-height:1.5">৳৮৫০ আপনার ওয়ালেটে জমা হয়েছে</div>
+        </div>
+        <div style="font-size:.68rem;color:var(--text3)">৩ ঘ.</div>
+      </div>
+      <div style="display:flex;gap:12px;padding:14px 16px;cursor:pointer">
+        <div style="font-size:1.4rem">🪪</div>
+        <div style="flex:1">
+          <div style="font-size:.86rem;font-weight:700" data-i18n="notif.kyc">KYC মনে করিয়ে দেওয়া</div>
+          <div style="font-size:.77rem;color:var(--text2);margin-top:2px;line-height:1.5">আপনার NID ভেরিফিকেশন অপেক্ষমাণ</div>
+        </div>
+        <div style="font-size:.68rem;color:var(--text3)">কাল</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE 18 — SETTINGS
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-settings">
+  <nav class="top-nav">
+    <button class="btn-icon" onclick="goto('pg-profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <span style="flex:1;font-weight:700" data-i18n="menu.settings">সেটিংস</span>
+  </nav>
+  <div class="content" style="padding-bottom:20px">
+    <div style="padding:12px 16px 6px;font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em" data-i18n="settings.general">সাধারণ</div>
+    <div class="card-flat" style="margin:0 16px">
+      <div class="setting-row">
+        <div class="menu-icon">🌐</div>
+        <div class="setting-info"><h4 data-i18n="settings.lang">ভাষা</h4><p id="langDisp">বাংলা</p></div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="changeLang('bn')">বাং</button>
+          <button class="btn btn-secondary btn-sm" onclick="changeLang('en')">EN</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="menu-icon">🌙</div>
+        <div class="setting-info"><h4 data-i18n="settings.dark">ডার্ক মোড</h4></div>
+        <div class="toggle" id="darkTgl" onclick="toggleDark(this)"></div>
+      </div>
+      <div class="setting-row">
+        <div class="menu-icon">🔔</div>
+        <div class="setting-info"><h4 data-i18n="settings.notif">নোটিফিকেশন</h4></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+    <div style="padding:14px 16px 6px;font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em" data-i18n="settings.account">অ্যাকাউন্ট</div>
+    <div class="card-flat" style="margin:0 16px">
+      <div class="setting-row" style="cursor:pointer" onclick="showModal('editProfileModal')">
+        <div class="menu-icon">✏️</div>
+        <div class="setting-info"><h4 data-i18n="settings.editProf">প্রোফাইল সম্পাদনা</h4></div>
+        <span class="menu-arr">›</span>
+      </div>
+      <div class="setting-row" style="cursor:pointer" onclick="goto('pg-verification')">
+        <div class="menu-icon">🪪</div>
+        <div class="setting-info"><h4 data-i18n="verif.title">KYC ভেরিফিকেশন</h4></div>
+        <span class="menu-arr">›</span>
+      </div>
+      <div class="setting-row" style="cursor:pointer" onclick="showModal('rateSModal')">
+        <div class="menu-icon">💵</div>
+        <div class="setting-info"><h4 data-i18n="settings.rate">আমার রেট পরিবর্তন</h4><p id="rateDisp">৳৫০০/ঘণ্টা</p></div>
+        <span class="menu-arr">›</span>
+      </div>
+      <div class="setting-row" style="cursor:pointer;color:var(--red)" onclick="doLogout()">
+        <div class="menu-icon" style="background:rgba(239,68,68,.08)">🚪</div>
+        <div class="setting-info"><h4 style="color:var(--red)" data-i18n="menu.logout">লগআউট</h4></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE: KYC PENDING (shown while kycStatus=pending)
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-kyc-pending">
+  <div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;background:var(--bg);text-align:center">
+    <div style="font-size:4rem;margin-bottom:16px">⏳</div>
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px" data-i18n="kyc.pendingTitle">ভেরিফিকেশন চলছে</h2>
+    <p style="font-size:.84rem;color:var(--text2);line-height:1.7;max-width:300px;margin-bottom:24px" data-i18n="kyc.pendingMsg">আপনার KYC ডকুমেন্ট Admin-এর কাছে পাঠানো হয়েছে। অনুমোদন পেলে আপনাকে স্বয়ংক্রিয়ভাবে জানানো হবে।</p>
+    <div id="kycStatusBadge" style="margin-bottom:20px">
+      <span class="badge badge-warn" style="font-size:.82rem;padding:6px 16px">⏳ অপেক্ষমাণ</span>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:18px;width:100%;max-width:340px;margin-bottom:20px">
+      <div style="font-size:.78rem;font-weight:700;margin-bottom:12px" data-i18n="kyc.steps">ভেরিফিকেশন ধাপসমূহ</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.7rem;flex-shrink:0">✓</div><span style="font-size:.8rem">নিবন্ধন সম্পন্ন</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.7rem;flex-shrink:0">✓</div><span style="font-size:.8rem">KYC জমা দেওয়া হয়েছে</span></div>
+        <div style="display:flex;align-items:center;gap:10px" id="kycStep3"><div style="width:24px;height:24px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.7rem;flex-shrink:0">⏳</div><span style="font-size:.8rem">Admin পর্যালোচনা</span></div>
+        <div style="display:flex;align-items:center;gap:10px" id="kycStep4"><div style="width:24px;height:24px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:.7rem;flex-shrink:0">4</div><span style="font-size:.8rem;color:var(--text3)">ড্যাশবোর্ড আনলক</span></div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="goto('pg-verification')" data-i18n="kyc.uploadDocs">📄 KYC ডকুমেন্ট আপলোড করুন</button>
+    <div style="margin-top:20px">
+      <button onclick="doLogout()" style="font-size:.75rem;color:var(--text3);cursor:pointer" data-i18n="menu.logout">লগআউট</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE: KYC REJECTED
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-kyc-rejected">
+  <div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;background:var(--bg);text-align:center">
+    <div style="font-size:4rem;margin-bottom:16px">❌</div>
+    <h2 style="font-size:1.2rem;font-weight:800;color:var(--red);margin-bottom:8px" data-i18n="kyc.rejectedTitle">ভেরিফিকেশন প্রত্যাখ্যাত</h2>
+    <p style="font-size:.84rem;color:var(--text2);line-height:1.7;max-width:300px;margin-bottom:20px" data-i18n="kyc.rejectedMsg">আপনার KYC প্রত্যাখ্যাত হয়েছে। সঠিক ডকুমেন্ট দিয়ে পুনরায় চেষ্টা করুন।</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="goto('pg-verification')" data-i18n="kyc.resubmit">পুনরায় জমা দিন</button>
+      <button class="btn btn-secondary" onclick="doLogout()" data-i18n="menu.logout">লগআউট</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE: BLOCKED
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-blocked">
+  <div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;background:var(--bg);text-align:center">
+    <div style="font-size:4rem;margin-bottom:16px">🚫</div>
+    <h2 style="font-size:1.2rem;font-weight:800;color:var(--red);margin-bottom:8px">অ্যাকাউন্ট ব্লক করা হয়েছে</h2>
+    <p style="font-size:.84rem;color:var(--text2);line-height:1.7;max-width:300px;margin-bottom:20px">আপনার অ্যাকাউন্ট সাময়িক স্থগিত করা হয়েছে। সাপোর্টে যোগাযোগ করুন।</p>
+    <a href="tel:09678100200" class="btn btn-primary">📞 সাপোর্ট: 09678-100200</a>
+    <div style="margin-top:16px"><button onclick="doLogout()" style="font-size:.75rem;color:var(--text3);cursor:pointer">লগআউট</button></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════ -->
+<!-- Withdraw Modal -->
+<div class="overlay" id="withdrawModal" onclick="closeModal('withdrawModal',event)">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <h3 class="sh-title" data-i18n="earn.withdraw">আয় উত্তোলন করুন</h3>
+    <div class="field"><label class="field-label" data-i18n="earn.amount">পরিমাণ (৳)</label><input type="number" class="input" placeholder="1000" min="500"/></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="chip" onclick="setWAmt(this,1000)">৳১,০০০</button>
+      <button class="chip" onclick="setWAmt(this,3000)">৳৩,০০০</button>
+      <button class="chip" onclick="setWAmt(this,5000)">৳৫,০০০</button>
+      <button class="chip" onclick="setWAmt(this,10000)">৳১০,০০০</button>
+    </div>
+    <div class="field"><label class="field-label" data-i18n="earn.method">পেমেন্ট পদ্ধতি</label>
+      <select class="input select"><option>bKash</option><option>Nagad</option><option>ব্যাংক ট্রান্সফার</option></select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="closeModal('withdrawModal');showToast(t('toast.withdrawOk'),'success')" data-i18n="earn.proceed">উত্তোলন করুন</button>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="overlay" id="editProfileModal" onclick="closeModal('editProfileModal',event)">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <h3 class="sh-title" data-i18n="settings.editProf">প্রোফাইল সম্পাদনা</h3>
+    <div class="field"><label class="field-label" data-i18n="field.name">নাম</label><input type="text" class="input" id="epName"/></div>
+    <div class="field"><label class="field-label" data-i18n="ob.bio">পরিচিতি</label><textarea class="input" rows="3" id="epBio" style="resize:none"></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="saveProfile()" data-i18n="settings.save">সংরক্ষণ করুন</button>
+  </div>
+</div>
+
+<!-- Rate Change Modal -->
+<div class="overlay" id="rateSModal" onclick="closeModal('rateSModal',event)">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <h3 class="sh-title" data-i18n="settings.rate">আমার রেট পরিবর্তন</h3>
+    <div class="field"><label class="field-label" data-i18n="ob.rate">ঘণ্টা প্রতি রেট (৳)</label><input type="number" class="input" id="rateInput" value="500" min="100"/></div>
+    <button class="btn btn-primary btn-full" onclick="saveRate()" data-i18n="settings.save">সংরক্ষণ করুন</button>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="overlay" id="helpModal" onclick="closeModal('helpModal',event)">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <h3 class="sh-title" data-i18n="menu.help">সাহায্য ও সাপোর্ট</h3>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="menu-item" style="border:1px solid var(--border);border-radius:var(--r-lg)">
+        <div class="menu-icon">📞</div><div style="flex:1"><div class="menu-label">হটলাইন</div><div class="menu-sub">09678-100200</div></div>
+      </div>
+      <div class="menu-item" style="border:1px solid var(--border);border-radius:var(--r-lg)">
+        <div class="menu-icon">💬</div><div style="flex:1"><div class="menu-label">লাইভ চ্যাট</div><div class="menu-sub">সকাল ৮টা — রাত ১০টা</div></div>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-full" style="margin-top:14px" onclick="closeModal('helpModal')" data-i18n="common.close">বন্ধ করুন</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ════ PROVIDER TYPE ════ */
+let selectedProvType = 'worker';
+function selectProvType(type){
+  selectedProvType = type;
+  document.getElementById('ptWorker').classList.toggle('on', type==='worker');
+  document.getElementById('ptShop').classList.toggle('on', type==='shop_owner');
+  document.getElementById('skillField').style.display = type==='worker' ? 'flex' : 'none';
+  document.getElementById('shopField').style.display  = type==='shop_owner' ? 'flex' : 'none';
+}
+
+/* ════ I18N ════ */
+const TR = {
+  bn:{
+    'login.sub.provider':'প্রোভাইডার পোর্টাল — সেবা দিন, আয় করুন',
+    'login.heading':'লগইন করুন','login.sub':'আপনার প্রোভাইডার অ্যাকাউন্টে প্রবেশ করুন',
+    'login.btn':'লগইন করুন','login.forgot':'পাসওয়ার্ড ভুলে গেছেন?',
+    'login.noAcc':'অ্যাকাউন্ট নেই?','login.register':'নিবন্ধন করুন',
+    'signup.heading':'প্রোভাইডার হিসেবে নিবন্ধন','signup.sub':'আপনার দক্ষতা শেয়ার করুন, আয় করুন',
+    'signup.btn':'অ্যাকাউন্ট তৈরি করুন','signup.hasAcc':'ইতিমধ্যে অ্যাকাউন্ট আছে?',
+    'signup.agree':'আমি Nexus-Serv BD-এর শর্তাবলীতে সম্মত',
+    'signup.selectSkill':'পেশা বেছে নিন',
+    'tab.email':'ইমেইল','tab.phone':'মোবাইল OTP',
+    'google.btn':'Google দিয়ে লগইন','or':'অথবা',
+    'field.email':'ইমেইল','field.password':'পাসওয়ার্ড','field.confirmPwd':'পাসওয়ার্ড নিশ্চিত',
+    'field.phone':'মোবাইল নম্বর','field.name':'পূর্ণ নাম','field.skill':'প্রধান দক্ষতা / পেশা',
+    'otp.send':'OTP পাঠান','otp.heading':'OTP কোড দিন',
+    'otp.sub':'আপনার নম্বরে ৬-সংখ্যার কোড পাঠানো হয়েছে',
+    'otp.verify':'যাচাই করুন','otp.resendIn':'পুনরায় পাঠান','otp.resend':'পুনরায় পাঠান',
+    'forgot.heading':'পাসওয়ার্ড রিসেট','forgot.sub':'ইমেইলে রিসেট লিংক পাঠানো হবে',
+    'forgot.btn':'রিসেট লিংক পাঠান','forgot.success':'ইমেইল পাঠানো হয়েছে!',
+    'forgot.back':'লগইনে ফিরুন',
+    'ob.p1':'প্রোফাইল তৈরি করুন','ob.photo':'ছবি আপলোড করুন',
+    'ob.p2':'আপনার পেশা ও রেট','ob.p2sub':'গ্রাহকরা এই তথ্য দেখবেন',
+    'ob.rate':'ঘণ্টা প্রতি রেট (৳)','ob.exp':'অভিজ্ঞতা (বছর)','ob.bio':'সংক্ষিপ্ত পরিচিতি',
+    'ob.p3':'ভাষা ও অবস্থান','ob.lang':'পছন্দের ভাষা','ob.loc':'📍 লোকেশন অনুমতি দিন',
+    'ob.p4':'সব প্রস্তুত!','ob.doneMsg':'আপনার প্রোভাইডার অ্যাকাউন্ট তৈরি হয়েছে। KYC সম্পন্ন করুন এবং কাজ শুরু করুন!',
+    'ob.start':'শুরু করা যাক! 🚀',
+    'common.back':'← ফিরে যান','common.back2':'← পিছু','common.next':'পরবর্তী →','common.close':'বন্ধ করুন',
+    'cat.electric':'ইলেকট্রিশিয়ান','cat.plumber':'প্লাম্বার','cat.ac':'এসি মেকানিক',
+    'cat.painter':'পেইন্টার','cat.cleaner':'ক্লিনার','cat.carpenter':'কার্পেন্টার','cat.welder':'ওয়েল্ডার',
+    'nav.dash':'ড্যাশবোর্ড','nav.jobs':'জবস','nav.earn':'আয়','nav.profile':'প্রোফাইল','nav.shop':'আমার শপ',
+    'dash.greeting':'আজকের সুপ্রভাত 👋','dash.todayEarn':'আজকের আয়','dash.todayJobs':'আজকের কাজ',
+    'dash.rating':'গড় রেটিং','dash.pending':'অপেক্ষমাণ','dash.status':'আপনার স্ট্যাটাস',
+    'dash.statusSub':'অনলাইনে থাকলে নতুন জব পাবেন','dash.online':'অনলাইন','dash.offline':'অফলাইন',
+    'dash.newReq':'নতুন অনুরোধ','dash.allJobs':'সব দেখুন','dash.weeklyEarn':'সাপ্তাহিক আয়',
+    'dash.thisWeek':'এই সপ্তাহ',
+    'status.new':'নতুন','status.accepted':'গৃহীত','status.ongoing':'চলমান','status.done':'সম্পন্ন',
+    'job.detail':'জবের বিস্তারিত','job.reject':'প্রত্যাখ্যান','job.accept':'গ্রহণ করুন ✓',
+    'job.new':'নতুন','job.accepted':'গৃহীত','job.done':'সম্পন্ন',
+    'job.service':'সেবার ধরন','job.duration':'সময়কাল','job.schedule':'তারিখ ও সময়',
+    'job.payment':'পেমেন্ট','job.address':'ঠিকানা','job.desc':'বিবরণ',
+    'job.priceBreak':'মূল্য বিভাজন','job.baseRate':'বেস রেট','job.commission':'Nexus কমিশন (১৫%)',
+    'job.yourEarn':'আপনার আয়',
+    'active.title':'চলমান কাজ','active.inProgress':'কাজ চলছে...','active.started':'শুরু হয়েছে',
+    'active.elapsed':'অতিবাহিত','active.earning':'আনুমানিক আয়',
+    'active.map':'🗺️ ম্যাপে দেখুন','active.otpTitle':'কাজ সম্পন্নের OTP',
+    'active.otpSub':'গ্রাহক আপনাকে ৬-সংখ্যার কোড দেবেন।',
+    'active.chat':'💬 চ্যাট','active.complete':'কাজ সম্পন্ন ✓',
+    'shop.add':'+ পণ্য যোগ','shop.addNew':'নতুন পণ্য যোগ করুন',
+    'shop.edit':'সম্পাদনা','shop.delete':'মুছুন',
+    'shop.addProduct':'নতুন পণ্য যোগ করুন','shop.editProduct':'পণ্য সম্পাদনা',
+    'shop.uploadImg':'পণ্যের ছবি আপলোড করুন','shop.prodName':'পণ্যের নাম',
+    'shop.prodCat':'ক্যাটেগরি','shop.price':'মূল্য (৳)','shop.stock':'স্টক পরিমাণ',
+    'shop.unit':'একক','shop.desc':'বিবরণ','shop.save':'পণ্য সংরক্ষণ করুন','shop.update':'আপডেট করুন',
+    'shop.products':'পণ্য','shop.sales':'বিক্রয়','shop.orders':'অর্ডার',
+    'earn.available':'উত্তোলনযোগ্য ব্যালেন্স','earn.pending':'মুলতুবি','earn.today':'আজকের আয়',
+    'earn.month':'এই মাস','earn.jobs':'সম্পন্ন কাজ','earn.commission':'মোট কমিশন',
+    'earn.withdrawal':'উত্তোলন','earn.txHistory':'লেনদেনের ইতিহাস',
+    'earn.withdraw':'উত্তোলন','earn.statement':'📄 স্টেটমেন্ট','earn.amount':'পরিমাণ (৳)',
+    'earn.method':'পেমেন্ট পদ্ধতি','earn.proceed':'উত্তোলন করুন',
+    'verif.title':'KYC ভেরিফিকেশন','verif.pending':'ভেরিফিকেশন অপেক্ষমাণ',
+    'verif.pendingSub':'সম্পূর্ণ ভেরিফিকেশন সম্পন্ন করুন',
+    'verif.mobile':'মোবাইল ভেরিফিকেশন','verif.email':'ইমেইল ভেরিফিকেশন',
+    'verif.nid':'জাতীয় পরিচয়পত্র (NID)','verif.nidSub':'NID-এর সামনে ও পিছনের ছবি আপলোড করুন',
+    'verif.submit':'জমা দিন','verif.done':'সম্পন্ন',
+    'verif.selfie':'সেলফি ভেরিফিকেশন','verif.selfieSub':'NID ধরে সেলফি তুলুন',
+    'verif.skill':'স্কিল ভেরিফিকেশন','verif.skillSub':'দক্ষতার সার্টিফিকেট আপলোড করুন (ঐচ্ছিক)',
+    'verif.approved':'অনুমোদন','verif.approvedSub':'Nexus টিম ২৪-৪৮ ঘণ্টায় যাচাই করবে',
+    'wp.rating':'রেটিং','wp.jobs':'কাজ','wp.completion':'সম্পন্ন',
+    'menu.shop':'আমার শপ','menu.notifs':'নোটিফিকেশন','menu.settings':'সেটিংস',
+    'menu.help':'সাহায্য ও সাপোর্ট','menu.logout':'লগআউট',
+    'settings.general':'সাধারণ','settings.lang':'ভাষা','settings.dark':'ডার্ক মোড',
+    'settings.notif':'নোটিফিকেশন','settings.account':'অ্যাকাউন্ট',
+    'settings.editProf':'প্রোফাইল সম্পাদনা','settings.rate':'আমার রেট পরিবর্তন',
+    'settings.save':'সংরক্ষণ করুন',
+    'notif.markAll':'সব পড়া চিহ্নিত','notif.newJob':'নতুন জব অনুরোধ!',
+    'notif.newReview':'নতুন রিভিউ পেয়েছেন!','notif.payment':'পেমেন্ট পেয়েছেন!',
+    'notif.kyc':'KYC মনে করিয়ে দেওয়া',
+    'search.filter':'ফিল্টার',
+    'toast.loginOk':'সফলভাবে লগইন হয়েছে!','toast.loginFail':'লগইন ব্যর্থ','toast.logoutOk':'লগআউট হয়েছে',
+    'toast.signupOk':'অ্যাকাউন্ট তৈরি হয়েছে!','toast.resetSent':'রিসেট ইমেইল পাঠানো হয়েছে',
+    'toast.accepted':'জব গ্রহণ করা হয়েছে!','toast.rejected':'জব প্রত্যাখ্যাত হয়েছে',
+    'toast.completed':'কাজ সম্পন্ন হয়েছে! পেমেন্ট পাচ্ছেন।',
+    'toast.mapOpen':'ম্যাপ খুলছে...','toast.uploadOk':'ছবি আপলোড হচ্ছে...',
+    'toast.submitted':'জমা দেওয়া হয়েছে!','toast.withdrawOk':'উত্তোলন অনুরোধ পাঠানো হয়েছে',
+    'toast.prodSaved':'পণ্য সংরক্ষিত হয়েছে!','toast.prodDeleted':'পণ্য মুছে ফেলা হয়েছে',
+    'toast.profileSaved':'প্রোফাইল আপডেট হয়েছে','toast.rateSaved':'রেট আপডেট হয়েছে',
+    'toast.coming':'শীঘ্রই আসছে...','toast.googleFail':'Google সাইন-ইন ব্যর্থ',
+    'err.name':'নাম দিন','err.email':'ইমেইল দিন','err.pwd':'পাসওয়ার্ড দিন',
+    'err.match':'পাসওয়ার্ড মিলছে না','err.agree':'শর্তাবলীতে সম্মত হন',
+    'kyc.pendingTitle':'ভেরিফিকেশন চলছে',
+    'kyc.pendingMsg':'আপনার KYC ডকুমেন্ট Admin-এর কাছে পাঠানো হয়েছে। অনুমোদন পেলে স্বয়ংক্রিয়ভাবে জানানো হবে।',
+    'kyc.steps':'ভেরিফিকেশন ধাপসমূহ',
+    'kyc.uploadDocs':'📄 KYC ডকুমেন্ট আপলোড করুন',
+    'kyc.rejectedTitle':'ভেরিফিকেশন প্রত্যাখ্যাত',
+    'kyc.rejectedMsg':'আপনার KYC প্রত্যাখ্যাত হয়েছে। সঠিক ডকুমেন্ট দিয়ে পুনরায় চেষ্টা করুন।',
+    'kyc.resubmit':'পুনরায় জমা দিন',
+  },
+  en:{
+    'login.sub.provider':'Provider Portal — Serve, Earn, Grow',
+    'login.heading':'Sign In','login.sub':'Access your provider account',
+    'login.btn':'Sign In','login.forgot':'Forgot password?',
+    'login.noAcc':"Don't have an account?",'login.register':'Register',
+    'signup.heading':'Register as Provider','signup.sub':'Share your skills, earn money',
+    'signup.btn':'Create Account','signup.hasAcc':'Already have an account?',
+    'signup.agree':'I agree to Nexus-Serv BD Terms & Privacy Policy',
+    'signup.selectSkill':'Select your skill',
+    'tab.email':'Email','tab.phone':'Mobile OTP',
+    'google.btn':'Sign in with Google','or':'or',
+    'field.email':'Email','field.password':'Password','field.confirmPwd':'Confirm Password',
+    'field.phone':'Mobile Number','field.name':'Full Name','field.skill':'Primary Skill / Trade',
+    'otp.send':'Send OTP','otp.heading':'Enter OTP Code',
+    'otp.sub':'A 6-digit code has been sent to your number',
+    'otp.verify':'Verify','otp.resendIn':'Resend in','otp.resend':'Resend OTP',
+    'forgot.heading':'Reset Password','forgot.sub':"We'll send a reset link to your email",
+    'forgot.btn':'Send Reset Link','forgot.success':'Email sent! Check your inbox.',
+    'forgot.back':'Back to Login',
+    'ob.p1':'Set Up Profile','ob.photo':'Upload Photo',
+    'ob.p2':'Your Skill & Rate','ob.p2sub':'Customers will see this info',
+    'ob.rate':'Hourly Rate (৳)','ob.exp':'Experience (years)','ob.bio':'Short Bio',
+    'ob.p3':'Language & Location','ob.lang':'Preferred Language','ob.loc':'📍 Allow Location',
+    'ob.p4':'All Set!','ob.doneMsg':'Your provider account is ready. Complete KYC and start working!',
+    'ob.start':"Let's Go! 🚀",
+    'common.back':'← Back','common.back2':'← Previous','common.next':'Next →','common.close':'Close',
+    'cat.electric':'Electrician','cat.plumber':'Plumber','cat.ac':'AC Mechanic',
+    'cat.painter':'Painter','cat.cleaner':'Cleaner','cat.carpenter':'Carpenter','cat.welder':'Welder',
+    'nav.dash':'Dashboard','nav.jobs':'Jobs','nav.earn':'Earnings','nav.profile':'Profile','nav.shop':'My Shop',
+    'dash.greeting':'Good Morning 👋','dash.todayEarn':"Today's Earnings",'dash.todayJobs':"Today's Jobs",
+    'dash.rating':'Avg Rating','dash.pending':'Pending','dash.status':'Your Status',
+    'dash.statusSub':'Stay online to receive new jobs','dash.online':'Online','dash.offline':'Offline',
+    'dash.newReq':'New Requests','dash.allJobs':'See All','dash.weeklyEarn':'Weekly Earnings',
+    'dash.thisWeek':'This week',
+    'status.new':'New','status.accepted':'Accepted','status.ongoing':'Ongoing','status.done':'Done',
+    'job.detail':'Job Details','job.reject':'Reject','job.accept':'Accept ✓',
+    'job.new':'New','job.accepted':'Accepted','job.done':'Completed',
+    'job.service':'Service Type','job.duration':'Duration','job.schedule':'Date & Time',
+    'job.payment':'Payment','job.address':'Address','job.desc':'Description',
+    'job.priceBreak':'Price Breakdown','job.baseRate':'Base Rate','job.commission':'Nexus Commission (15%)',
+    'job.yourEarn':'Your Earnings',
+    'active.title':'Active Job','active.inProgress':'Work in progress...','active.started':'Started at',
+    'active.elapsed':'Elapsed','active.earning':'Est. Earnings',
+    'active.map':'🗺️ View on Map','active.otpTitle':'Job Completion OTP',
+    'active.otpSub':'Ask the customer for their 6-digit code.',
+    'active.chat':'💬 Chat','active.complete':'Mark Complete ✓',
+    'shop.add':'+ Add Product','shop.addNew':'Add New Product',
+    'shop.edit':'Edit','shop.delete':'Delete',
+    'shop.addProduct':'Add New Product','shop.editProduct':'Edit Product',
+    'shop.uploadImg':'Upload product image','shop.prodName':'Product Name',
+    'shop.prodCat':'Category','shop.price':'Price (৳)','shop.stock':'Stock Quantity',
+    'shop.unit':'Unit','shop.desc':'Description','shop.save':'Save Product','shop.update':'Update',
+    'shop.products':'Products','shop.sales':'Sales','shop.orders':'Orders',
+    'earn.available':'Available Balance','earn.pending':'Pending','earn.today':"Today's Earnings",
+    'earn.month':'This Month','earn.jobs':'Completed Jobs','earn.commission':'Total Commission',
+    'earn.withdrawal':'Withdrawal','earn.txHistory':'Transaction History',
+    'earn.withdraw':'Withdraw','earn.statement':'📄 Statement','earn.amount':'Amount (৳)',
+    'earn.method':'Payment Method','earn.proceed':'Withdraw Now',
+    'verif.title':'KYC Verification','verif.pending':'Verification Pending',
+    'verif.pendingSub':'Complete your verification',
+    'verif.mobile':'Mobile Verification','verif.email':'Email Verification',
+    'verif.nid':'National ID (NID)','verif.nidSub':'Upload front and back of your NID',
+    'verif.submit':'Submit','verif.done':'Completed',
+    'verif.selfie':'Selfie Verification','verif.selfieSub':'Take a selfie holding your NID',
+    'verif.skill':'Skill Verification','verif.skillSub':'Upload skill certificate (optional)',
+    'verif.approved':'Approval','verif.approvedSub':'Nexus team verifies within 24-48 hours',
+    'wp.rating':'Rating','wp.jobs':'Jobs','wp.completion':'Completion',
+    'menu.shop':'My Shop','menu.notifs':'Notifications','menu.settings':'Settings',
+    'menu.help':'Help & Support','menu.logout':'Logout',
+    'settings.general':'General','settings.lang':'Language','settings.dark':'Dark Mode',
+    'settings.notif':'Notifications','settings.account':'Account',
+    'settings.editProf':'Edit Profile','settings.rate':'Update My Rate','settings.save':'Save',
+    'notif.markAll':'Mark all read','notif.newJob':'New Job Request!',
+    'notif.newReview':'New Review Received!','notif.payment':'Payment Received!',
+    'notif.kyc':'KYC Reminder',
+    'search.filter':'Filter',
+    'toast.loginOk':'Signed in successfully!','toast.loginFail':'Login failed','toast.logoutOk':'Logged out',
+    'toast.signupOk':'Account created!','toast.resetSent':'Reset email sent',
+    'toast.accepted':'Job accepted!','toast.rejected':'Job rejected',
+    'toast.completed':'Job completed! Payment incoming.',
+    'toast.mapOpen':'Opening map...','toast.uploadOk':'Uploading image...',
+    'toast.submitted':'Submitted!','toast.withdrawOk':'Withdrawal request sent',
+    'toast.prodSaved':'Product saved!','toast.prodDeleted':'Product deleted',
+    'toast.profileSaved':'Profile updated','toast.rateSaved':'Rate updated',
+    'toast.coming':'Coming soon...','toast.googleFail':'Google sign-in failed',
+    'err.name':'Enter your name','err.email':'Enter your email','err.pwd':'Enter your password',
+    'err.match':"Passwords don't match",'err.agree':'Please agree to the terms',
+    'kyc.pendingTitle':'Verification In Progress',
+    'kyc.pendingMsg':'Your KYC documents have been submitted. You will be notified automatically once approved.',
+    'kyc.steps':'Verification Steps',
+    'kyc.uploadDocs':'📄 Upload KYC Documents',
+    'kyc.rejectedTitle':'Verification Rejected',
+    'kyc.rejectedMsg':'Your KYC has been rejected. Please resubmit with correct documents.',
+    'kyc.resubmit':'Resubmit',
+  }
+};
+
+let lang = localStorage.getItem('nsbd_p_lang') || 'bn';
+function t(k){ return (TR[lang]&&TR[lang][k])||(TR.en[k])||k; }
+function applyLang(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') el.placeholder=t(k);
+    else el.textContent=t(k);
+  });
+  document.documentElement.lang=lang;
+  document.documentElement.setAttribute('data-lang',lang);
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('on',b.dataset.lang===lang));
+  const ld=document.getElementById('langDisp');if(ld)ld.textContent=lang==='bn'?'বাংলা':'English';
+}
+function changeLang(l){ lang=l; localStorage.setItem('nsbd_p_lang',l); applyLang(); }
+document.getElementById('langFloat').addEventListener('click',e=>{
+  const b=e.target.closest('[data-lang]'); if(b) changeLang(b.dataset.lang);
+});
+
+/* ════ THEME ════ */
+let dark=localStorage.getItem('nsbd_p_theme')==='dark';
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  document.getElementById('themeBtn').textContent=dark?'☀️':'🌙';
+  const dt=document.getElementById('darkTgl');if(dt)dt.classList.toggle('on',dark);
+}
+function toggleDark(el){ dark=!dark; localStorage.setItem('nsbd_p_theme',dark?'dark':'light'); applyTheme(); }
+document.getElementById('themeBtn').onclick=()=>toggleDark();
+applyTheme();
+
+/* ════ PAGE NAV ════ */
+let hist=[];
+function goto(id){
+  const cur=document.querySelector('.page.active');
+  if(cur){ hist.push(cur.id); cur.classList.remove('active'); }
+  const pg=document.getElementById(id); if(pg) pg.classList.add('active');
+  window.scrollTo(0,0);
+}
+function switchBNav(tab){
+  const map={dashboard:'pg-dashboard',jobs:'pg-jobs',earnings:'pg-earnings',profile:'pg-profile'};
+  if(map[tab]) goto(map[tab]);
+}
+
+/* ════ TOAST ════ */
+function showToast(msg,type='success',dur=3000){
+  const icons={success:'✅',error:'❌',info:'ℹ️',warn:'⚠️'};
+  const el=document.createElement('div');
+  el.className=`toast t-${type}`;
+  el.innerHTML=`<span class="toast-icon">${icons[type]||'✅'}</span><span>${msg}</span>`;
+  document.getElementById('tc').appendChild(el);
+  setTimeout(()=>{el.style.animation='toOut .3s ease forwards';setTimeout(()=>el.remove(),300);},dur);
+}
+
+/* ════ MODAL ════ */
+function showModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id,e){ if(!e||e.target.classList.contains('overlay')) document.getElementById(id).classList.remove('open'); }
+
+/* ════ LOGIN TAB ════ */
+function switchTab(t){
+  document.getElementById('pnlEmail').style.display=t==='email'?'block':'none';
+  document.getElementById('pnlPhone').style.display=t==='phone'?'block':'none';
+  document.getElementById('tabEmail').classList.toggle('on',t==='email');
+  document.getElementById('tabPhone').classList.toggle('on',t==='phone');
+}
+
+/* ════ EMAIL LOGIN ════ */
+async function doEmailLogin(){
+  const em=document.getElementById('lEmail').value.trim();
+  const pw=document.getElementById('lPwd').value;
+  if(!em) return showToast(t('err.email'),'error');
+  if(!pw) return showToast(t('err.pwd'),'error');
+  setLoad('btnELogin','eltxt','elspin',true);
+  if(!window.fbReady){
+    setTimeout(()=>{setLoad('btnELogin','eltxt','elspin',false);onLoginOK({displayName:'Demo Provider',email:em,uid:'demo_'+Date.now()});},1200);
+    return;
+  }
+  try{
+    const c=await window.fbMod.signInWithEmailAndPassword(window.fbAuth,em,pw);
+    onLoginOK(c.user);
+  }catch(e){ showToast(t('toast.loginFail'),'error'); setLoad('btnELogin','eltxt','elspin',false); }
+}
+
+/* ════ GOOGLE LOGIN ════ */
+async function doGoogleLogin(){
+  if(!window.fbReady){ onLoginOK({displayName:'Google Provider',email:'google@demo.com',uid:'demo_google_'+Date.now()}); return; }
+  try{
+    const r=await window.fbMod.signInWithPopup(window.fbAuth,window.fbGoogle);
+    onLoginOK(r.user);
+  }catch(e){ showToast(t('toast.googleFail'),'error'); }
+}
+
+/* ════ PHONE OTP ════ */
+async function doPhoneLogin(){
+  const ph='+880'+document.getElementById('lPhone').value.trim();
+  if(ph.length<14) return showToast(t('err.email'),'error');
+  setLoad('btnPLogin','pltxt','plspin',true);
+  if(!window.fbReady){
+    sessionStorage.setItem('otp_phone',ph);
+    setLoad('btnPLogin','pltxt','plspin',false);
+    goto('pg-otp'); startOtpTimer(); return;
+  }
+  try{
+    if(!window.rcv) window.rcv=new window.fbMod.RecaptchaVerifier(window.fbAuth,'rc-login',{size:'invisible'});
+    window.confResult=await window.fbMod.signInWithPhoneNumber(window.fbAuth,ph,window.rcv);
+    sessionStorage.setItem('otp_phone',ph);
+    setLoad('btnPLogin','pltxt','plspin',false);
+    goto('pg-otp'); startOtpTimer();
+  }catch(e){ showToast('OTP পাঠাতে সমস্যা','error'); setLoad('btnPLogin','pltxt','plspin',false); }
+}
+
+/* ════ OTP INPUTS ════ */
+let otpInt;
+function startOtpTimer(){
+  let s=30; clearInterval(otpInt);
+  document.getElementById('resendBtn').style.display='none';
+  document.getElementById('otpTimer').style.display='inline';
+  const ph=sessionStorage.getItem('otp_phone')||'';
+  const sub=document.getElementById('otpSub');
+  if(sub) sub.textContent=t('otp.sub')+(ph?' — '+ph:'');
+  otpInt=setInterval(()=>{
+    s--;
+    document.getElementById('otpTimer').textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    if(s<=0){ clearInterval(otpInt); document.getElementById('otpTimer').style.display='none'; document.getElementById('resendBtn').style.display='inline'; }
+  },1000);
+}
+document.querySelectorAll('.otp-box').forEach((inp,i,arr)=>{
+  inp.addEventListener('input',()=>{
+    inp.value=inp.value.replace(/\D/,'').slice(-1);
+    if(inp.value&&i<arr.length-1) arr[i+1].focus();
+    document.getElementById('btnOtp').disabled=[...arr].some(x=>!x.value);
+  });
+  inp.addEventListener('keydown',e=>{ if(e.key==='Backspace'&&!inp.value&&i>0) arr[i-1].focus(); });
+  inp.addEventListener('paste',e=>{
+    const txt=e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);
+    txt.split('').forEach((c,j)=>{ if(arr[j]) arr[j].value=c; });
+    arr[Math.min(txt.length,5)].focus();
+    document.getElementById('btnOtp').disabled=false;
+    e.preventDefault();
+  });
+});
+async function verifyOTP(){
+  const code=[...document.querySelectorAll('.otp-box')].map(i=>i.value).join('');
+  if(code.length<6) return;
+  setLoad('btnOtp','otptxt','otpspin',true);
+  if(!window.confResult){ setTimeout(()=>{ setLoad('btnOtp','otptxt','otpspin',false); onLoginOK({displayName:'Mobile Provider',phoneNumber:sessionStorage.getItem('otp_phone'),uid:'demo_phone_'+Date.now()}); },1000); return; }
+  try{ const r=await window.confResult.confirm(code); onLoginOK(r.user); }
+  catch(e){ showToast(t('toast.loginFail'),'error'); setLoad('btnOtp','otptxt','otpspin',false); }
+}
+async function resendOTP(){ await doPhoneLogin(); }
+
+/* ════ SIGNUP ════ */
+function pwdStr(v){
+  let s=0;
+  if(v.length>=6)s++;if(v.length>=10)s++;if(/[A-Z]/.test(v))s++;if(/[0-9!@#$]/.test(v))s++;
+  const f=document.getElementById('pwdFill');
+  f.className='pwd-fill '+(s?`s${s}`:'');
+  f.style.width=(s*25)+'%';
+}
+async function doSignup(){
+  const name=document.getElementById('sName').value.trim();
+  const email=document.getElementById('sEmail').value.trim();
+  const pwd=document.getElementById('sPwd').value;
+  const cnf=document.getElementById('sCnf').value;
+  const agreed=document.getElementById('agreeChk').checked;
+  if(!name) return showToast(t('err.name'),'error');
+  if(!email) return showToast(t('err.email'),'error');
+  if(pwd!==cnf) return showToast(t('err.match'),'error');
+  if(!agreed) return showToast(t('err.agree'),'error');
+  setLoad('btnSignup','sutxt','suspin',true);
+  if(!window.fbReady){
+    // Demo mode - create fake user with uid
+    setTimeout(()=>{
+      setLoad('btnSignup','sutxt','suspin',false);
+      showToast(t('toast.signupOk'),'success');
+      const fakeUser = {displayName:name, email, uid:'demo_'+Date.now(), phoneNumber:''};
+      onLoginOK(fakeUser);
+    },1400);
+    return;
+  }
+  try{
+    const c=await window.fbMod.createUserWithEmailAndPassword(window.fbAuth,email,pwd);
+    await window.fbMod.updateProfile(c.user,{displayName:name});
+    await createProviderDoc(c.user,name);
+    showToast(t('toast.signupOk'),'success');
+    onLoginOK(c.user);
+  }catch(e){ showToast(t('toast.loginFail'),'error'); setLoad('btnSignup','sutxt','suspin',false); }
+}
+async function createProviderDoc(user,name){
+  if(!window.fbDb||!window.fbReady) return;
+  const {doc,setDoc,serverTimestamp}=window.fbMod;
+  const pType = selectedProvType || 'worker';
+  const shopName = document.getElementById('sShopName')?.value||'';
+  const skill = pType==='worker' ? (document.getElementById('sSkill')?.value||'') : '';
+  try {
+    await setDoc(doc(window.fbDb,'providers',user.uid),{
+      uid: user.uid,
+      name,
+      email: user.email||'',
+      phone: user.phoneNumber||'',
+      role: 'provider',
+      providerType: pType,
+      skill,
+      shopName: pType==='shop_owner' ? shopName : '',
+      hourlyRate: 500,
+      experience: 0,
+      bio: '',
+      rating: 0,
+      totalJobs: 0,
+      totalEarnings: 0,
+      wallet: 0,
+      isVerified: false,
+      kycStatus: 'pending',
+      isOnline: false,
+      isBlocked: false,
+      preferredLanguage: lang,
+      onboardingComplete: false,
+      createdAt: serverTimestamp(),
+    },{merge:true});
+    console.log('Provider doc created for uid:', user.uid);
+  } catch(err) {
+    console.error('createProviderDoc error:', err);
+  }
+}
+
+/* ════ FORGOT ════ */
+async function doForgot(){
+  const em=document.getElementById('fEmail').value.trim();
+  if(!em) return showToast(t('err.email'),'error');
+  setLoad('btnForgot','ftxt','fspin',true);
+  if(!window.fbReady){
+    setTimeout(()=>{ setLoad('btnForgot','ftxt','fspin',false); document.getElementById('forgotForm').style.display='none'; document.getElementById('forgotOK').style.display='block'; showToast(t('toast.resetSent'),'success'); },1000);
+    return;
+  }
+  try{
+    await window.fbMod.sendPasswordResetEmail(window.fbAuth,em);
+    document.getElementById('forgotForm').style.display='none';
+    document.getElementById('forgotOK').style.display='block';
+    showToast(t('toast.resetSent'),'success');
+  }catch(e){ showToast(t('toast.loginFail'),'error'); setLoad('btnForgot','ftxt','fspin',false); }
+}
+
+/* ════ ON LOGIN ════ */
+let currentUser=null;
+/* ════ REAL-TIME PROVIDER STATUS LISTENER ════ */
+let kycUnsubscribe = null; // holds onSnapshot unsubscriber
+
+function onLoginOK(user){
+  currentUser=user;
+  localStorage.setItem('nsbd_p_in','1');
+  if(user.uid) localStorage.setItem('nsbd_p_uid', user.uid);
+  if(user.displayName) localStorage.setItem('nsbd_p_name', user.displayName);
+  showToast(t('toast.loginOk'),'success');
+  updateUI(user);
+  if(!localStorage.getItem('nsbd_p_ob')){
+    goto('pg-onboarding');
+  } else {
+    startProviderListener(user.uid);
+  }
+}
+
+// ── Real-time listener: listens to providers/{uid} for kycStatus changes ──
+function startProviderListener(uid){
+  if(!window.fbDb||!uid) {
+    // Demo mode fallback
+    goto('pg-dashboard'); startElapsedTimer(); return;
+  }
+  // Unsubscribe any previous listener
+  if(kycUnsubscribe) { kycUnsubscribe(); kycUnsubscribe=null; }
+
+  const {doc,onSnapshot}=window.fbMod;
+  const provRef=doc(window.fbDb,'providers',uid);
+
+  kycUnsubscribe=onSnapshot(provRef,(snap)=>{
+    if(!snap.exists()){
+      // New user - go to onboarding
+      goto('pg-onboarding'); return;
+    }
+    const data=snap.data();
+    // Store providerType for UI routing
+    currentProviderType = data.providerType || 'worker';
+    currentProviderData = data;
+
+    // Check blocked first
+    if(data.isBlocked===true){
+      goto('pg-blocked'); return;
+    }
+
+    // Strict lowercase check: 'verified' OR isVerified===true
+    const status=(data.kycStatus||'pending').toLowerCase();
+    if(status==='verified' || data.isVerified===true){
+      // ✅ VERIFIED — unlock dashboard
+      updateProviderUI(data);
+      // Route by providerType
+      if(currentProviderType==='shop_owner'){
+        updateBNavForShop();
+      } else {
+        updateBNavForWorker();
+      }
+      const currentPage=document.querySelector('.page.active');
+      const isOnAuthPage = currentPage && (
+        currentPage.id==='pg-login' || currentPage.id==='pg-signup' ||
+        currentPage.id==='pg-onboarding' || currentPage.id==='pg-kyc-pending' ||
+        currentPage.id==='pg-kyc-rejected'
+      );
+      if(isOnAuthPage || !currentPage){
+        goto('pg-dashboard'); startElapsedTimer();
+      }
+      // Update KYC step indicator if still visible
+      const step3=document.getElementById('kycStep3');
+      const step4=document.getElementById('kycStep4');
+      if(step3){ step3.querySelector('div').textContent='✓'; step3.querySelector('div').style.background='var(--green)'; }
+      if(step4){ step4.querySelector('div').textContent='✓'; step4.querySelector('div').style.background='var(--green)'; step4.querySelector('span').style.color='var(--text)'; }
+    }
+    else if(status==='rejected'){
+      // ❌ REJECTED — show rejection page
+      goto('pg-kyc-rejected');
+    }
+    else {
+      // ⏳ PENDING (default) — show waiting page
+      const badge=document.getElementById('kycStatusBadge');
+      if(badge) badge.innerHTML='<span class="badge badge-warn" style="font-size:.82rem;padding:6px 16px">⏳ অপেক্ষমাণ</span>';
+      goto('pg-kyc-pending');
+    }
+  }, (err)=>{
+    console.error('onSnapshot error:',err);
+    // Permission error — likely not a provider doc yet
+    if(err.code==='permission-denied'){
+      goto('pg-onboarding');
+    }
+  });
+}
+// Basic UI update from Firebase Auth user object
+function updateUI(user){
+  const name=user.displayName||'প্রোভাইডার';
+  const init=name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||'প্র';
+  ['dashAv','profAvDisp'].forEach(id=>{ const e=document.getElementById(id); if(e) e.textContent=init; });
+  const dn=document.getElementById('dashName'); if(dn) dn.textContent=name;
+  const pn=document.getElementById('profNameDisp'); if(pn) pn.textContent=name;
+  const ep=document.getElementById('epName'); if(ep) ep.value=name;
+  localStorage.setItem('nsbd_p_name',name);
+}
+
+// Full UI update from Firestore provider document data
+let currentProviderType = 'worker';
+let currentProviderData = {};
+
+function updateProviderUI(data){
+  const name=data.name||localStorage.getItem('nsbd_p_name')||'প্রোভাইডার';
+  const init=name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||'প্র';
+  ['dashAv','profAvDisp'].forEach(id=>{ const e=document.getElementById(id); if(e) e.textContent=init; });
+  const dn=document.getElementById('dashName'); if(dn) dn.textContent=name;
+  const pn=document.getElementById('profNameDisp'); if(pn) pn.textContent=name;
+  const ep=document.getElementById('epName'); if(ep) ep.value=name;
+  localStorage.setItem('nsbd_p_name',name);
+
+  // Update role display
+  const roleEl=document.querySelector('.profile-role');
+  if(roleEl){
+    if(data.providerType==='shop_owner'){
+      roleEl.textContent='🏪 '+(data.shopName||'Shop Owner')+' • ঢাকা';
+    } else {
+      roleEl.textContent='⚡ '+(data.skill||'Worker')+' • ঢাকা';
+    }
+  }
+  // Update wallet/earnings
+  const earnBal=document.getElementById('earnBal');
+  if(earnBal) earnBal.textContent=(data.wallet||0).toLocaleString();
+  // Update verified badge
+  const verBadge=document.querySelector('.badge-success');
+  if(verBadge&&data.isVerified) verBadge.textContent='✓ ভেরিফাইড';
+}
+
+// Update bottom nav for Shop Owner (show Shop instead of Jobs)
+function updateBNavForShop(){
+  document.querySelectorAll('.bnav[onclick*="jobs"]').forEach(el=>{
+    el.setAttribute('onclick',"switchBNav('shop')");
+    const svg=el.querySelector('svg');
+    if(svg) svg.outerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>';
+    const sp=el.querySelector('span'); if(sp) sp.textContent='শপ';
+  });
+}
+
+function updateBNavForWorker(){
+  // Already default — no change needed
+}
+
+/* ════ LOGOUT ════ */
+async function doLogout(){
+  // Stop real-time listener
+  if(kycUnsubscribe){ kycUnsubscribe(); kycUnsubscribe=null; }
+  if(window.fbAuth&&window.fbReady){ try{ await window.fbMod.signOut(window.fbAuth); }catch(e){} }
+  currentUser=null;
+  currentProviderType='worker';
+  currentProviderData={};
+  // Clear ALL cached session data
+  ['nsbd_p_in','nsbd_p_ob','nsbd_p_name','otp_phone'].forEach(k=>localStorage.removeItem(k));
+  showToast(t('toast.logoutOk'),'info');
+  goto('pg-login');
+}
+
+/* ════ ONBOARDING ════ */
+let obStep=1, obLangSel=lang;
+function obGo(n){
+  document.getElementById('ob'+obStep).style.display='none';
+  for(let i=1;i<=4;i++) document.getElementById('od'+i).style.background=i<=n?'var(--brand)':'var(--border)';
+  obStep=n;
+  document.getElementById('ob'+obStep).style.display='block';
+}
+function obLang(l){ obLangSel=l; document.getElementById('obLBn').classList.toggle('on',l==='bn'); document.getElementById('obLEn').classList.toggle('on',l==='en'); }
+function previewAv(input){
+  if(!input.files||!input.files[0]) return;
+  const r=new FileReader();
+  r.onload=e=>{ const av=document.getElementById('obAv'); av.innerHTML=`<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`; };
+  r.readAsDataURL(input.files[0]);
+}
+function reqLoc(){
+  navigator.geolocation.getCurrentPosition(
+    p=>{ sessionStorage.setItem('p_lat',p.coords.latitude); sessionStorage.setItem('p_lng',p.coords.longitude); document.getElementById('locSt').textContent='✅ লোকেশন পাওয়া গেছে'; document.getElementById('locSt').style.color='var(--green)'; },
+    ()=>{ document.getElementById('locSt').textContent='⚠️ লোকেশন প্রয়োজন'; document.getElementById('locSt').style.color='var(--yellow)'; }
+  );
+}
+async function finishOb(){
+  changeLang(obLangSel);
+  const obName  = document.getElementById('obName')?.value.trim()||'';
+  const obPhone = document.getElementById('obPhone')?.value.trim()||'';
+  const pType   = selectedProvType||'worker';
+  const obSkill = document.getElementById('obSkill')?.value||'electrician';
+  const obRate  = parseInt(document.getElementById('obRate')?.value)||500;
+  const obExp   = parseInt(document.getElementById('obExp')?.value)||0;
+  const obBio   = document.getElementById('obBio')?.value||'';
+
+  const providerData = {
+    name: obName,
+    phone: obPhone ? '+880'+obPhone : '',
+    providerType: pType,
+    skill: pType==='worker' ? obSkill : '',
+    shopName: pType==='shop_owner' ? (document.getElementById('sShopName')?.value||'') : '',
+    hourlyRate: obRate,
+    experience: obExp,
+    bio: obBio,
+    preferredLanguage: obLangSel,
+    onboardingComplete: true,
+    kycStatus: 'pending',
+    isVerified: false,
+    isBlocked: false,
+    isOnline: false,
+  };
+
+  // Save to Firebase if available
+  if(window.fbReady && window.fbDb && currentUser){
+    try{
+      const {doc,setDoc,serverTimestamp}=window.fbMod;
+      // Use setDoc with merge:true so it works even if doc doesn't exist yet
+      await setDoc(doc(window.fbDb,'providers',currentUser.uid),{
+        ...providerData,
+        uid: currentUser.uid,
+        email: currentUser.email||'',
+        role: 'provider',
+        rating: 0,
+        totalJobs: 0,
+        totalEarnings: 0,
+        wallet: 0,
+        updatedAt: serverTimestamp(),
+      },{merge:true});
+      console.log('Provider doc saved successfully!');
+    } catch(err){
+      console.error('finishOb Firebase error:', err);
+      showToast('Data save error: '+err.message,'error');
+    }
+  } else {
+    console.warn('Firebase not ready - saving locally only');
+  }
+
+  // Mark onboarding complete in localStorage
+  localStorage.setItem('nsbd_p_ob','1');
+  if(obName) localStorage.setItem('nsbd_p_name', obName);
+
+  showToast(lang==='bn'?'স্বাগতম! 🎉':'Welcome! 🎉','success');
+
+  // Navigate based on Firebase availability
+  if(window.fbReady && window.fbDb && currentUser && currentUser.uid){
+    // Real Firebase: use onSnapshot to determine where to go
+    startProviderListener(currentUser.uid);
+  } else {
+    // Demo mode or no Firebase: go directly to KYC pending page
+    goto('pg-kyc-pending');
+  }
+}
+
+/* ════ ONLINE TOGGLE ════ */
+let isOnline=true;
+function toggleOnline(){
+  isOnline=!isOnline;
+  const pill=document.getElementById('onlinePill');
+  const txt=document.getElementById('onlineTxt');
+  pill.classList.toggle('on',isOnline);
+  pill.classList.toggle('off',!isOnline);
+  txt.textContent=isOnline?t('dash.online'):t('dash.offline');
+  showToast(isOnline?t('dash.online'):t('dash.offline'),isOnline?'success':'info');
+}
+
+/* ════ JOB ACTIONS ════ */
+function acceptJob(btn){
+  const card=btn.closest('.job-card');
+  const badge=card.querySelector('.badge');
+  if(badge){ badge.className='badge badge-success'; badge.textContent=t('status.accepted'); }
+  btn.closest('[style*="flex"]')?.remove();
+  showToast(t('toast.accepted'),'success');
+}
+function rejectJob(btn){
+  const card=btn.closest('.job-card');
+  card.style.animation='toOut .3s ease forwards';
+  setTimeout(()=>card.remove(),300);
+  showToast(t('toast.rejected'),'info');
+}
+function acceptJobFull(){ showToast(t('toast.accepted'),'success'); goto('pg-active-booking'); }
+function rejectJobFull(){ showToast(t('toast.rejected'),'info'); goto('pg-jobs'); }
+function filterJobs(type){
+  document.querySelectorAll('#jobTabs .tab-btn').forEach(b=>{ b.classList.remove('on'); b.style.borderBottom='none'; });
+  event.currentTarget.classList.add('on'); event.currentTarget.style.borderBottom='2px solid var(--brand)';
+}
+
+/* ════ ACTIVE JOB TIMER ════ */
+let elInt, elSecs=0;
+function startElapsedTimer(){
+  clearInterval(elInt);
+  elSecs=0;
+  elInt=setInterval(()=>{
+    elSecs++;
+    const h=Math.floor(elSecs/3600),m=Math.floor((elSecs%3600)/60),s=elSecs%60;
+    const el=document.getElementById('elapsedTime');
+    if(el) el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    const earn=Math.floor((500/3600)*elSecs*0.85);
+    const le=document.getElementById('liveEarn'); if(le) le.textContent='৳'+earn;
+  },1000);
+}
+
+/* ════ ACTIVE OTP INPUTS ════ */
+document.querySelectorAll('#activeOtpInputs .otp-box').forEach((inp,i,arr)=>{
+  inp.addEventListener('input',()=>{
+    inp.value=inp.value.replace(/\D/,'').slice(-1);
+    if(inp.value&&i<arr.length-1) arr[i+1].focus();
+  });
+});
+function completeJob(){
+  showToast(t('toast.completed'),'success');
+  clearInterval(elInt);
+  setTimeout(()=>goto('pg-dashboard'),1500);
+}
+
+/* ════ CHAT ════ */
+function sendMsg(){
+  const inp=document.getElementById('chatInput');
+  const text=inp.value.trim(); if(!text) return;
+  const area=document.getElementById('chatArea');
+  const now=new Date();
+  const time=now.getHours()+':'+(String(now.getMinutes()).padStart(2,'0'));
+  const el=document.createElement('div');
+  el.style.cssText='max-width:78%;align-self:flex-end';
+  el.innerHTML=`<div style="background:var(--brand);color:#fff;border-radius:14px;border-bottom-right-radius:3px;padding:10px 13px;font-size:.86rem;line-height:1.55">${text}</div><div style="font-size:.67rem;color:var(--text3);margin-top:3px;text-align:right">${time} ✓✓</div>`;
+  area.appendChild(el);
+  inp.value='';
+  area.scrollTop=area.scrollHeight;
+  setTimeout(()=>{
+    const replies=lang==='bn'?['ঠিক আছে।','বুঝলাম।','আসছি।','একটু সময় লাগবে।']:['Okay.','Understood.','Coming.','Give me a moment.'];
+    const rep=document.createElement('div');
+    rep.style.cssText='max-width:78%';
+    rep.innerHTML=`<div style="background:var(--surface2);border-radius:14px;border-bottom-left-radius:3px;padding:10px 13px;font-size:.86rem;line-height:1.55">${replies[Math.floor(Math.random()*4)]}</div><div style="font-size:.67rem;color:var(--text3);margin-top:3px">${time}</div>`;
+    area.appendChild(rep); area.scrollTop=area.scrollHeight;
+  },1500);
+}
+
+/* ════ SHOP ════ */
+function addProduct(){ showToast(t('toast.prodSaved'),'success'); goto('pg-shop'); }
+function saveProduct(){ showToast(t('toast.prodSaved'),'success'); goto('pg-shop'); }
+function deleteProduct(){ showToast(t('toast.prodDeleted'),'info'); goto('pg-shop'); }
+
+/* ════ EARN ════ */
+function setWAmt(btn,amt){ const inp=document.querySelector('#withdrawModal input[type="number"]'); if(inp) inp.value=amt; }
+
+/* ════ PROFILE ════ */
+function saveProfile(){
+  const n=document.getElementById('epName')?.value?.trim();
+  if(n){ const dn=document.getElementById('profNameDisp'); if(dn) dn.textContent=n; }
+  closeModal('editProfileModal');
+  showToast(t('toast.profileSaved'),'success');
+}
+function saveRate(){
+  const v=document.getElementById('rateInput')?.value;
+  if(v){ const rd=document.getElementById('rateDisp'); if(rd) rd.textContent='৳'+v+'/ঘণ্টা'; }
+  closeModal('rateSModal');
+  showToast(t('toast.rateSaved'),'success');
+}
+
+/* ════ NOTIF ════ */
+function markAllRead(){
+  document.querySelectorAll('[style*="brand-bg"]').forEach(el=>el.style.background='');
+  showToast(lang==='bn'?'সব পড়া হয়েছে':'All marked as read','success');
+}
+
+/* ════ LOADING HELPER ════ */
+function setLoad(btnId,txtId,spinId,loading){
+  const b=document.getElementById(btnId);
+  const tx=document.getElementById(txtId);
+  const sp=document.getElementById(spinId);
+  if(b) b.disabled=loading;
+  if(tx) tx.style.display=loading?'none':'inline';
+  if(sp) sp.style.display=loading?'inline':'none';
+}
+
+/* ════ FIREBASE AUTH OBSERVER ════ */
+function initObserver(){
+  if(!window.fbReady||!window.fbAuth) return;
+  window.fbMod.onAuthStateChanged(window.fbAuth,user=>{
+    if(user&&!currentUser){
+      currentUser=user;
+      localStorage.setItem('nsbd_p_in','1');
+      localStorage.setItem('nsbd_p_name', user.displayName||'');
+      updateUI(user);
+      if(!localStorage.getItem('nsbd_p_ob')){
+        goto('pg-onboarding');
+      } else {
+        // Start real-time KYC listener
+        startProviderListener(user.uid);
+      }
+    } else if(!user){
+      // No Firebase session - clear cache and show login
+      if(kycUnsubscribe){ kycUnsubscribe(); kycUnsubscribe=null; }
+      currentUser=null;
+      localStorage.removeItem('nsbd_p_in');
+      localStorage.removeItem('nsbd_p_ob');
+      // Only redirect if currently on a protected page
+      const curPage = document.querySelector('.page.active');
+      const protectedPages = ['pg-dashboard','pg-jobs','pg-earnings','pg-profile',
+        'pg-kyc-pending','pg-kyc-rejected','pg-onboarding','pg-shop','pg-chat',
+        'pg-notifications','pg-settings','pg-verification'];
+      if(curPage && protectedPages.includes(curPage.id)){
+        goto('pg-login');
+      }
+    }
+  });
+}
+
+/* ════ INIT ════ */
+(function init(){
+  applyLang();
+  // Lang button init
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('on',b.dataset.lang===lang));
+  // Firebase
+  document.addEventListener('fb-ready',()=>initObserver());
+  if(window.fbReady) initObserver();
+  // Session check - only auto-login in demo mode (no Firebase)
+  // When Firebase IS available, let onAuthStateChanged handle routing
+  if(!window.fbReady && localStorage.getItem('nsbd_p_in')==='1'){
+    const name=localStorage.getItem('nsbd_p_name')||'প্রোভাইডার';
+    const uid=localStorage.getItem('nsbd_p_uid')||'demo_'+Date.now();
+    const fakeUser={displayName:name,email:'',uid};
+    updateUI(fakeUser);
+    if(localStorage.getItem('nsbd_p_ob')){
+      goto('pg-kyc-pending'); // Demo mode always shows KYC pending
+    } else {
+      goto('pg-onboarding');
+    }
+  }
+  // Set active chart bar
+  const bars=document.querySelectorAll('.chart-bars .chart-bar-wrap:last-child .chart-bar');
+  bars.forEach(b=>b.classList.add('active'));
+})();
+</script>
+</body>
+</html>
